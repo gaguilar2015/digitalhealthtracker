@@ -1,0 +1,128 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  /* Primary palette - Caribbean teal */
+  --color-primary-50: #f0fdfa;
+  --color-primary-100: #ccfbf1;
+  --color-primary-200: #99f6e4;
+  --color-primary-300: #5eead4;
+  --color-primary-400: #2dd4bf;
+  --color-primary-500: #14b8a6;
+  --color-primary-600: #0d9488;
+  --color-primary-700: #0f766e;
+  --color-primary-800: #115e59;
+  --color-primary-900: #134e4a;
+
+  /* Warm surface colors */
+  --color-surface-50: #faf9f7;
+  --color-surface-100: #f5f3f0;
+  --color-surface-200: #e8e5e0;
+
+  /* Dark nav palette */
+  --color-nav-900: #0f172a;
+  --color-nav-800: #1e293b;
+  --color-nav-700: #334155;
+
+  /* Workstream palette (unchanged) */
+  --color-ws-blue: #3B82F6;
+  --color-ws-indigo: #6366F1;
+  --color-ws-violet: #8B5CF6;
+  --color-ws-purple: #A855F7;
+  --color-ws-pink: #EC4899;
+  --color-ws-rose: #F43F5E;
+  --color-ws-orange: #F97316;
+  --color-ws-amber: #F59E0B;
+  --color-ws-emerald: #10B981;
+  --color-ws-teal: #14B8A6;
+  --color-ws-cyan: #06B6D4;
+  --color-ws-sky: #0EA5E9;
+
+  /* Refined status colors */
+  --color-status-not-started: #64748b;
+  --color-status-in-progress: #0d9488;
+  --color-status-complete: #d97706;
+  --color-status-delayed: #dc2626;
+}
+
+/* Base styles */
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Noise texture overlay (for dark surfaces) */
+.noise-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Shimmer animation for progress bars */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.progress-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Glass effect utility */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: fadeSlideIn 0.3s ease-out;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom scrollbar for dark surfaces */
+.dark-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Slide-in animation for comment panel */
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.2s ease-out;
+}
+
+/* Drag handles: always visible on touch devices */
+@media (pointer: coarse) {
+  .drag-handle { opacity: 1 !important; }
+}
