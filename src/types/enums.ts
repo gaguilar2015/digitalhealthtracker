@@ -20,5 +20,23 @@ export const WORKSTREAM_COLORS: WorkstreamColor[] = [
   'orange', 'amber', 'emerald', 'teal', 'cyan', 'sky',
 ];
 
-export type TrackerColumnType = 'text' | 'number' | 'date' | 'datetime' | 'select' | 'multiselect' | 'checkbox';
-export const TRACKER_COLUMN_TYPES: TrackerColumnType[] = ['text', 'number', 'date', 'datetime', 'select', 'multiselect', 'checkbox'];
+export type SheetColumnType = 'text' | 'number' | 'date' | 'datetime' | 'select' | 'multiselect' | 'checkbox';
+export const SHEET_COLUMN_TYPES: SheetColumnType[] = ['text', 'number', 'date', 'datetime', 'select', 'multiselect', 'checkbox'];
+
+export type ChartType = 'bar' | 'horizontal_bar' | 'stacked_bar' | 'line' | 'area' | 'pie' | 'donut' | 'kpi';
+export const CHART_TYPES: ChartType[] = ['bar', 'horizontal_bar', 'stacked_bar', 'line', 'area', 'pie', 'donut', 'kpi'];
+
+export type AggFunction = 'count' | 'sum' | 'avg' | 'min' | 'max';
+export const AGG_FUNCTIONS: AggFunction[] = ['count', 'sum', 'avg', 'min', 'max'];
+
+export type DateBucket = 'day' | 'week' | 'month' | 'quarter';
+export const DATE_BUCKETS: DateBucket[] = ['day', 'week', 'month', 'quarter'];
+
+export type SourceType = 'single_sheet' | 'sheet_group';
+export const SOURCE_TYPES: SourceType[] = ['single_sheet', 'sheet_group'];
+
+export type SortBy = 'category_asc' | 'value_desc' | 'value_asc';
+export const SORT_BY_OPTIONS: SortBy[] = ['category_asc', 'value_desc', 'value_asc'];
+
+export type DiagramNodeType = 'system' | 'database' | 'form' | 'group' | 'process' | 'decision' | 'document' | 'cloud' | 'person' | 'queue' | 'note' | 'terminal';
+export const DIAGRAM_NODE_TYPES: DiagramNodeType[] = ['system', 'database', 'form', 'group', 'process', 'decision', 'document', 'cloud', 'person', 'queue', 'note', 'terminal'];

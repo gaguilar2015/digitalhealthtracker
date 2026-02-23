@@ -49,11 +49,18 @@ Deno.serve(async (req) => {
     }
 
     // 2. Parse request body
-    const { email, full_name, title, permission_level } = await req.json();
+    const { email, full_name, title, permission_level, password } = await req.json();
 
-    if (!email || !full_name || !permission_level) {
+    if (!email || !full_name || !permission_level || !password) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: email, full_name, permission_level" }),
+        JSON.stringify({ error: "Missing required fields: email, full_name, permission_level, password" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (typeof password !== "string" || password.length < 8) {
+      return new Response(
+        JSON.stringify({ error: "Password must be at least 8 characters" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -68,14 +75,16 @@ Deno.serve(async (req) => {
     // 3. Admin client with service role key
     const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    // Invite the user via Supabase Auth
-    const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo: 'https://bz-health-tracker.netlify.app',
+    // Create the user with a password (no invite email sent)
+    const { data: createData, error: createError } = await adminClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
     });
-    if (inviteError) {
-      console.error("inviteUserByEmail failed:", inviteError.message);
+    if (createError) {
+      console.error("createUser failed:", createError.message);
       return new Response(
-        JSON.stringify({ error: inviteError.message }),
+        JSON.stringify({ error: createError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -84,7 +93,7 @@ Deno.serve(async (req) => {
     const { error: insertError } = await adminClient
       .from("team_members")
       .insert({
-        id: inviteData.user.id,
+        id: createData.user.id,
         email,
         full_name,
         title: title ?? null,
@@ -101,7 +110,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ user_id: inviteData.user.id }),
+      JSON.stringify({ user_id: createData.user.id }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {

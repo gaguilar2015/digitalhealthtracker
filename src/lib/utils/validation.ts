@@ -94,9 +94,10 @@ export const inviteMemberSchema = z.object({
   full_name: z.string().min(1, 'Name is required'),
   title: z.string().nullable().optional(),
   permission_level: z.enum(['admin', 'member', 'viewer']),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
-export const trackerColumnSchema = z.object({
+export const sheetColumnSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1, 'Column name is required'),
   type: z.enum(['text', 'number', 'date', 'datetime', 'select', 'multiselect', 'checkbox']),
@@ -104,8 +105,13 @@ export const trackerColumnSchema = z.object({
   width: z.number().min(60).optional(),
 });
 
-export const trackerSchema = z.object({
+export const sheetSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().nullable().optional(),
-  columns: z.array(trackerColumnSchema).min(1, 'At least one column is required'),
+  columns: z.array(sheetColumnSchema).min(1, 'At least one column is required'),
+});
+
+export const diagramSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().nullable().optional(),
 });

@@ -5,9 +5,15 @@ import type {
   DependencyItemType,
   AttachmentParentType,
   ResourceType,
-  TrackerColumnType,
+  SheetColumnType,
+  ChartType,
+  AggFunction,
+  DateBucket,
+  SourceType,
+  SortBy,
+  DiagramNodeType,
 } from './enums';
-import type { CellStyle, SelectOptionStyle, ConditionalFormatRule, TrackerRowGroup } from './formatting';
+import type { CellStyle, SelectOptionStyle, ConditionalFormatRule, SheetRowGroup } from './formatting';
 
 export interface TeamMember {
   id: string;
@@ -158,7 +164,7 @@ export interface Resource {
 export type CreateResource = Omit<Resource, 'id' | 'created_at' | 'updated_at'>;
 export type UpdateResource = Partial<Omit<Resource, 'id' | 'created_at' | 'updated_at'>>;
 
-export interface TrackerGroup {
+export interface SheetGroup {
   id: string;
   name: string;
   description: string | null;
@@ -169,13 +175,13 @@ export interface TrackerGroup {
   updated_at: string;
 }
 
-export type CreateTrackerGroup = Omit<TrackerGroup, 'id' | 'created_at' | 'updated_at'>;
-export type UpdateTrackerGroup = Partial<Omit<TrackerGroup, 'id' | 'created_at' | 'updated_at'>>;
+export type CreateSheetGroup = Omit<SheetGroup, 'id' | 'created_at' | 'updated_at'>;
+export type UpdateSheetGroup = Partial<Omit<SheetGroup, 'id' | 'created_at' | 'updated_at'>>;
 
-export interface TrackerColumn {
+export interface SheetColumn {
   id: string;
   name: string;
-  type: TrackerColumnType;
+  type: SheetColumnType;
   options?: string[];
   width?: number; // pixels, minimum 60
   defaultStyle?: CellStyle;
@@ -183,13 +189,13 @@ export interface TrackerColumn {
   conditionalRules?: ConditionalFormatRule[];
 }
 
-export interface Tracker {
+export interface Sheet {
   id: string;
   name: string;
   description: string | null;
   icon: string | null;
-  columns: TrackerColumn[];
-  row_groups?: TrackerRowGroup[] | null;
+  columns: SheetColumn[];
+  row_groups?: SheetRowGroup[] | null;
   group_by_column?: string | null;
   auto_group_order?: string[] | null;
   group_id: string | null;
@@ -199,30 +205,30 @@ export interface Tracker {
   updated_at: string;
 }
 
-export type CreateTracker = Omit<Tracker, 'id' | 'created_at' | 'updated_at'>;
-export type UpdateTracker = Partial<Omit<Tracker, 'id' | 'created_at' | 'updated_at'>>;
+export type CreateSheet = Omit<Sheet, 'id' | 'created_at' | 'updated_at'>;
+export type UpdateSheet = Partial<Omit<Sheet, 'id' | 'created_at' | 'updated_at'>>;
 
-export interface TrackerMember {
+export interface SheetMember {
   id: string;
-  tracker_id: string;
+  sheet_id: string;
   team_member_id: string;
   created_at: string;
 }
 
-export type CreateTrackerMember = Pick<TrackerMember, 'tracker_id' | 'team_member_id'>;
+export type CreateSheetMember = Pick<SheetMember, 'sheet_id' | 'team_member_id'>;
 
-export interface TrackerGroupMember {
+export interface SheetGroupMember {
   id: string;
-  tracker_group_id: string;
+  sheet_group_id: string;
   team_member_id: string;
   created_at: string;
 }
 
-export type CreateTrackerGroupMember = Pick<TrackerGroupMember, 'tracker_group_id' | 'team_member_id'>;
+export type CreateSheetGroupMember = Pick<SheetGroupMember, 'sheet_group_id' | 'team_member_id'>;
 
-export interface TrackerRow {
+export interface SheetRow {
   id: string;
-  tracker_id: string;
+  sheet_id: string;
   cells: Record<string, unknown>;
   cell_formats?: Record<string, CellStyle> | null;
   group_id?: string | null;
@@ -232,8 +238,8 @@ export interface TrackerRow {
   updated_at: string;
 }
 
-export type CreateTrackerRow = Omit<TrackerRow, 'id' | 'created_at' | 'updated_at'>;
-export type UpdateTrackerRow = Partial<Omit<TrackerRow, 'id' | 'created_at' | 'updated_at'>>;
+export type CreateSheetRow = Omit<SheetRow, 'id' | 'created_at' | 'updated_at'>;
+export type UpdateSheetRow = Partial<Omit<SheetRow, 'id' | 'created_at' | 'updated_at'>>;
 
 export interface WorkstreamMember {
   id: string;
@@ -244,13 +250,132 @@ export interface WorkstreamMember {
 
 export type CreateWorkstreamMember = Pick<WorkstreamMember, 'workstream_id' | 'team_member_id'>;
 
-export interface TrackerRowComment {
+export interface SheetRowComment {
   id: string;
-  tracker_id: string;
-  tracker_row_id: string;
+  sheet_id: string;
+  sheet_row_id: string;
   content: string;
   created_by: string;
   created_at: string;
 }
 
-export type CreateTrackerRowComment = Pick<TrackerRowComment, 'tracker_id' | 'tracker_row_id' | 'content' | 'created_by'>;
+export type CreateSheetRowComment = Pick<SheetRowComment, 'sheet_id' | 'sheet_row_id' | 'content' | 'created_by'>;
+
+// Dashboard Widgets
+export interface WidgetConfig {
+  xColumnId?: string;
+  xColumnName?: string;
+  yColumnId?: string;
+  yColumnName?: string;
+  aggFunction?: AggFunction;
+  groupByColumnId?: string;
+  groupByColumnName?: string;
+  dateBucket?: DateBucket;
+  sortBy?: SortBy;
+}
+
+export interface ChartDataPoint {
+  category: string;
+  value: number;
+  [key: string]: string | number;
+}
+
+export interface DashboardWidget {
+  id: string;
+  title: string;
+  chart_type: ChartType;
+  source_type: SourceType;
+  sheet_id: string | null;
+  sheet_group_id: string | null;
+  selected_sheet_ids: string[];
+  config: WidgetConfig;
+  color_palette: string;
+  grid_span: number;
+  show_legend: boolean;
+  show_values: boolean;
+  sort_order: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateDashboardWidget = Omit<DashboardWidget, 'id' | 'created_at' | 'updated_at'>;
+export type UpdateDashboardWidget = Partial<Omit<DashboardWidget, 'id' | 'created_at' | 'updated_at'>>;
+
+// Diagrams
+export interface DiagramNodeData {
+  label: string;
+  description?: string;
+  nodeType: DiagramNodeType;
+  color?: string;
+  borderColor?: string;
+  details?: string;
+  detailFields?: { label: string; value: string }[];
+  fontSize?: number;
+}
+
+export interface DiagramEdgeData {
+  label?: string;
+}
+
+export interface DiagramLegendItem {
+  id: string;
+  label: string;
+  color: string;
+  description?: string;
+}
+
+export interface DiagramFlowData {
+  nodes: unknown[];
+  edges: unknown[];
+  viewport: { x: number; y: number; zoom: number };
+}
+
+export interface DiagramGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  sort_order: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateDiagramGroup = Omit<DiagramGroup, 'id' | 'created_at' | 'updated_at'>;
+export type UpdateDiagramGroup = Partial<Omit<DiagramGroup, 'id' | 'created_at' | 'updated_at'>>;
+
+export interface DiagramGroupMember {
+  id: string;
+  diagram_group_id: string;
+  team_member_id: string;
+  created_at: string;
+}
+
+export type CreateDiagramGroupMember = Pick<DiagramGroupMember, 'diagram_group_id' | 'team_member_id'>;
+
+export interface Diagram {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  flow_data: DiagramFlowData;
+  legend: DiagramLegendItem[];
+  sort_order: number;
+  group_id: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateDiagram = Omit<Diagram, 'id' | 'created_at' | 'updated_at'>;
+export type UpdateDiagram = Partial<Omit<Diagram, 'id' | 'created_at' | 'updated_at'>>;
+
+export interface DiagramMember {
+  id: string;
+  diagram_id: string;
+  team_member_id: string;
+  created_at: string;
+}
+
+export type CreateDiagramMember = Pick<DiagramMember, 'diagram_id' | 'team_member_id'>;

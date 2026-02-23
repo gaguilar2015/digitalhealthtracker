@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X } from 'lucide-react';
+import { X, Eye, EyeOff, RefreshCw, Copy, Check, KeyRound } from 'lucide-react';
 import { z } from 'zod';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { FormField } from '@/components/shared';
@@ -25,8 +25,22 @@ interface EditMemberDialogProps {
   member: TeamMember | null;
 }
 
+const CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+
+function generatePassword(): string {
+  const array = new Uint8Array(12);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => CHARSET[byte % CHARSET.length]).join('');
+}
+
 export function EditMemberDialog({ open, onClose, member }: EditMemberDialogProps) {
-  const { updateMember } = useTeamMembers();
+  const { updateMember, resetPassword } = useTeamMembers();
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   const {
     register,
@@ -50,8 +64,44 @@ export function EditMemberDialog({ open, onClose, member }: EditMemberDialogProp
         title: member.title,
         permission_level: member.permission_level,
       });
+      setShowResetPassword(false);
+      setNewPassword('');
+      setShowPassword(false);
+      setCopied(false);
+      setPasswordError('');
     }
   }, [open, member, reset]);
+
+  const handleGenerate = () => {
+    setNewPassword(generatePassword());
+    setShowPassword(true);
+    setCopied(false);
+    setPasswordError('');
+  };
+
+  const handleCopy = async () => {
+    if (!newPassword) return;
+    await navigator.clipboard.writeText(newPassword);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleResetPassword = async () => {
+    if (!member) return;
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+    setPasswordError('');
+    setResetting(true);
+    try {
+      await resetPassword({ userId: member.id, password: newPassword });
+      setShowResetPassword(false);
+      setNewPassword('');
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const onSubmit = async (data: EditMemberValues) => {
     if (!member) return;
@@ -96,6 +146,79 @@ export function EditMemberDialog({ open, onClose, member }: EditMemberDialogProp
               <option value="viewer">Viewer</option>
             </select>
           </FormField>
+
+          {/* Reset Password Section */}
+          <div className="border-t border-surface-200 pt-4">
+            {!showResetPassword ? (
+              <button
+                type="button"
+                onClick={() => setShowResetPassword(true)}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
+              >
+                <KeyRound className="w-4 h-4" />
+                Reset Password
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">New Password</label>
+                <div className="flex gap-1.5">
+                  <div className="relative flex-1">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={e => { setNewPassword(e.target.value); setPasswordError(''); }}
+                      placeholder="Min 8 characters"
+                      className="w-full px-3 py-2 pr-9 text-sm border border-surface-200 rounded-xl focus:border-primary-500 focus:ring-primary-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGenerate}
+                    className="px-2 py-2 text-gray-400 hover:text-gray-600 border border-surface-200 rounded-xl hover:bg-surface-50"
+                    title="Generate password"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="px-2 py-2 text-gray-400 hover:text-gray-600 border border-surface-200 rounded-xl hover:bg-surface-50"
+                    title="Copy password"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+                {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
+                <p className="text-xs text-gray-400">
+                  Share this password with the user. They can change it later in their profile.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={resetting || !newPassword}
+                    className="px-3 py-1.5 text-sm font-medium text-white bg-primary-600 rounded-xl hover:bg-primary-700 disabled:opacity-50"
+                  >
+                    {resetting ? 'Resetting...' : 'Set Password'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowResetPassword(false); setNewPassword(''); setPasswordError(''); }}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <button

@@ -57,6 +57,7 @@ export async function invite(
   fullName: string,
   title: string | null,
   permissionLevel: PermissionLevel,
+  password: string,
 ): Promise<void> {
   const { data, error } = await supabase.functions.invoke('invite-user', {
     body: {
@@ -64,6 +65,7 @@ export async function invite(
       full_name: fullName,
       title,
       permission_level: permissionLevel,
+      password,
     },
   });
 
@@ -76,16 +78,17 @@ export async function invite(
   }
 }
 
-export async function resendInvite(email: string): Promise<void> {
-  const { data, error } = await supabase.functions.invoke('resend-invite', {
-    body: { email },
+export async function resetPassword(userId: string, password: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('reset-password', {
+    body: { user_id: userId, password },
   });
 
   if (error) {
-    throw new Error(error.message || 'Failed to resend invite');
+    throw new Error(error.message || 'Failed to reset password');
   }
 
   if (data?.error) {
     throw new Error(data.error);
   }
 }
+

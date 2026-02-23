@@ -30,8 +30,8 @@ export interface ConditionalFormatRule {
   style: CellStyle;
 }
 
-// Manual row group definition (stored on tracker)
-export interface TrackerRowGroup {
+// Manual row group definition (stored on sheet)
+export interface SheetRowGroup {
   id: string;
   name: string;
   color?: string;

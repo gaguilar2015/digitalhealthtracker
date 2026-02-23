@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
-import TopNav from './TopNav';
 import MobileNav from './MobileNav';
 import { useAuditLog } from '@/hooks/useAuditLog';
 
@@ -27,7 +27,13 @@ export default function AppLayout() {
       <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(prev => !prev)} />
       <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopNav onToggleMobile={() => setMobileOpen(true)} />
+        {/* Mobile-only hamburger */}
+        <div className="lg:hidden flex items-center h-12 px-3 border-b border-surface-200 bg-white/80 backdrop-blur-sm">
+          <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-surface-100 transition-colors">
+            <Menu className="w-5 h-5 text-gray-600" />
+          </button>
+          <span className="ml-2 text-sm font-semibold text-gray-900">Health Tracker</span>
+        </div>
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>

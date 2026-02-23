@@ -42,25 +42,25 @@ export const queryKeys = {
   dashboard: {
     all: () => ['dashboard'] as const,
   },
-  trackerGroups: {
-    all: () => ['trackerGroups'] as const,
-    detail: (id: string) => ['trackerGroups', id] as const,
+  sheetGroups: {
+    all: () => ['sheetGroups'] as const,
+    detail: (id: string) => ['sheetGroups', id] as const,
   },
-  trackers: {
-    all: () => ['trackers'] as const,
-    detail: (id: string) => ['trackers', id] as const,
+  sheets: {
+    all: () => ['sheets'] as const,
+    detail: (id: string) => ['sheets', id] as const,
   },
-  trackerMembers: {
-    byTracker: (trackerId: string) => ['trackerMembers', trackerId] as const,
+  sheetMembers: {
+    bySheet: (sheetId: string) => ['sheetMembers', sheetId] as const,
   },
-  trackerGroupMembers: {
-    byGroup: (groupId: string) => ['trackerGroupMembers', groupId] as const,
+  sheetGroupMembers: {
+    byGroup: (groupId: string) => ['sheetGroupMembers', groupId] as const,
   },
-  trackerRows: {
-    byTracker: (trackerId: string) => ['trackerRows', trackerId] as const,
+  sheetRows: {
+    bySheet: (sheetId: string) => ['sheetRows', sheetId] as const,
   },
-  trackerRowComments: {
-    byTracker: (trackerId: string) => ['trackerRowComments', trackerId] as const,
+  sheetRowComments: {
+    bySheet: (sheetId: string) => ['sheetRowComments', sheetId] as const,
   },
   workstreamMembers: {
     byWorkstream: (wsId: string) => ['workstreamMembers', wsId] as const,
@@ -68,5 +68,22 @@ export const queryKeys = {
   },
   auditLogs: {
     list: (filters?: Record<string, unknown>) => ['auditLogs', filters] as const,
+  },
+  dashboardWidgets: {
+    all: () => ['dashboardWidgets'] as const,
+  },
+  diagrams: {
+    all: () => ['diagrams'] as const,
+    detail: (id: string) => ['diagrams', id] as const,
+  },
+  diagramMembers: {
+    byDiagram: (diagramId: string) => ['diagramMembers', diagramId] as const,
+  },
+  diagramGroups: {
+    all: () => ['diagramGroups'] as const,
+    detail: (id: string) => ['diagramGroups', id] as const,
+  },
+  diagramGroupMembers: {
+    byGroup: (groupId: string) => ['diagramGroupMembers', groupId] as const,
   },
 };

@@ -13,7 +13,8 @@ const DashboardPage = lazy(() => import('@/components/dashboard/DashboardPage'))
 const WorkplanPage = lazy(() => import('@/components/workplan/WorkplanPage'));
 const TimelinePage = lazy(() => import('@/components/timeline/TimelinePage'));
 const ResourcesPage = lazy(() => import('@/components/resources/ResourcesPage'));
-const TrackersPage = lazy(() => import('@/components/trackers/TrackersPage'));
+const SheetsPage = lazy(() => import('@/components/sheets/SheetsPage'));
+const DiagramsPage = lazy(() => import('@/components/diagrams/DiagramsPage'));
 const ProfilePage = lazy(() => import('@/components/profile/ProfilePage'));
 const TeamPage = lazy(() => import('@/components/admin/TeamPage'));
 const AuditLogsPage = lazy(() => import('@/components/admin/AuditLogsPage'));
@@ -56,8 +57,10 @@ export default function App() {
               <Route path="workplan/:code" element={<Suspense fallback={<PageLoader />}><WorkplanPage /></Suspense>} />
               <Route path="timeline" element={<Suspense fallback={<PageLoader />}><TimelinePage /></Suspense>} />
               <Route path="resources" element={<Suspense fallback={<PageLoader />}><ResourcesPage /></Suspense>} />
-              <Route path="trackers" element={<Suspense fallback={<PageLoader />}><TrackersPage /></Suspense>} />
-              <Route path="trackers/:id" element={<Suspense fallback={<PageLoader />}><TrackersPage /></Suspense>} />
+              <Route path="sheets" element={<Suspense fallback={<PageLoader />}><SheetsPage /></Suspense>} />
+              <Route path="sheets/:id" element={<Suspense fallback={<PageLoader />}><SheetsPage /></Suspense>} />
+              <Route path="diagrams" element={<Suspense fallback={<PageLoader />}><DiagramsPage /></Suspense>} />
+              <Route path="diagrams/:id" element={<Suspense fallback={<PageLoader />}><DiagramsPage /></Suspense>} />
               <Route path="profile" element={<Suspense fallback={<PageLoader />}><ProfilePage /></Suspense>} />
               <Route path="admin/team" element={<Suspense fallback={<PageLoader />}><TeamPage /></Suspense>} />
               <Route path="admin/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogsPage /></Suspense>} />

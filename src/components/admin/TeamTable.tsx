@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Pencil, UserX, UserCheck, ArrowUpDown, Send } from 'lucide-react';
+import { Pencil, UserX, UserCheck, ArrowUpDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { clsx } from 'clsx';
 import { Avatar, SearchInput } from '@/components/shared';
@@ -11,7 +11,6 @@ interface TeamTableProps {
   onEdit: (member: TeamMember) => void;
   onDeactivate: (member: TeamMember) => void;
   onReactivate: (member: TeamMember) => void;
-  onResendInvite: (member: TeamMember) => void;
 }
 
 type SortField = 'full_name' | 'email' | 'permission_level' | 'is_active' | 'last_login_at';
@@ -29,7 +28,7 @@ const PERMISSION_COLORS: Record<string, string> = {
   viewer: 'bg-gray-100 text-gray-700',
 };
 
-export function TeamTable({ members, onEdit, onDeactivate, onReactivate, onResendInvite }: TeamTableProps) {
+export function TeamTable({ members, onEdit, onDeactivate, onReactivate }: TeamTableProps) {
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('full_name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -114,15 +113,6 @@ export function TeamTable({ members, onEdit, onDeactivate, onReactivate, onResen
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
-                {member.last_login_at === null && (
-                  <button
-                    onClick={() => onResendInvite(member)}
-                    className="p-1.5 rounded hover:bg-surface-100 text-gray-400 hover:text-primary-600"
-                    title="Resend Invite"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </button>
-                )}
                 {member.is_active ? (
                   <button
                     onClick={() => onDeactivate(member)}
@@ -223,15 +213,6 @@ export function TeamTable({ members, onEdit, onDeactivate, onReactivate, onResen
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
-                    {member.last_login_at === null && (
-                      <button
-                        onClick={() => onResendInvite(member)}
-                        className="p-1.5 rounded hover:bg-surface-100 text-gray-400 hover:text-primary-600"
-                        title="Resend Invite"
-                      >
-                        <Send className="w-4 h-4" />
-                      </button>
-                    )}
                     {member.is_active ? (
                       <button
                         onClick={() => onDeactivate(member)}

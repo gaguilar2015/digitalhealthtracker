@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, GanttChart, FolderOpen, Table2, Users, Activity, PanelLeftClose, PanelLeftOpen, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, GanttChart, FolderOpen, Table2, Workflow, Users, Activity, PanelLeftClose, PanelLeftOpen, ShieldCheck, Settings, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { clsx } from 'clsx';
 
@@ -8,7 +8,8 @@ const navItems = [
   { to: '/workplan', label: 'Workplan', icon: ClipboardList },
   { to: '/timeline', label: 'Timeline', icon: GanttChart },
   { to: '/resources', label: 'Resources', icon: FolderOpen },
-  { to: '/trackers', label: 'Trackers', icon: Table2 },
+  { to: '/sheets', label: 'Sheets', icon: Table2 },
+  { to: '/diagrams', label: 'Diagrams', icon: Workflow },
 ];
 
 interface SidebarProps {
@@ -17,7 +18,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, teamMember, signOut } = useAuth();
 
   return (
     <aside
@@ -131,6 +132,70 @@ export default function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
           </NavLink>
         </div>
       )}
+
+      {/* User profile */}
+      <div className={clsx('p-3 border-t border-surface-200', collapsed && 'flex flex-col items-center')}>
+        {collapsed ? (
+          <>
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                clsx(
+                  'p-2.5 rounded-lg transition-all duration-200',
+                  isActive
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-surface-100',
+                )
+              }
+              title="Profile"
+            >
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-[10px] font-semibold text-white">
+                {teamMember?.full_name?.charAt(0) ?? <User className="w-3 h-3" />}
+              </div>
+            </NavLink>
+            <button
+              onClick={signOut}
+              className="p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-surface-100 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 px-3 py-2 mb-1">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-sm font-semibold text-white shrink-0">
+                {teamMember?.full_name?.charAt(0) ?? <User className="w-4 h-4" />}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{teamMember?.full_name ?? 'User'}</p>
+                <p className="text-xs text-gray-400 truncate">{teamMember?.email ?? ''}</p>
+              </div>
+            </div>
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                clsx(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  isActive
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-surface-100',
+                )
+              }
+            >
+              <Settings className="w-5 h-5" />
+              Profile
+            </NavLink>
+            <button
+              onClick={signOut}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-surface-100 transition-all duration-200 w-full"
+            >
+              <LogOut className="w-5 h-5" />
+              Sign Out
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Collapse toggle */}
       <div className={clsx('p-3 border-t border-surface-200', collapsed && 'flex justify-center')}>

@@ -1,4 +1,4 @@
-import type { CellStyle, ConditionalFormatRule, TrackerColumn } from '@/types';
+import type { CellStyle, ConditionalFormatRule, SheetColumn } from '@/types';
 
 /**
  * Evaluate a single conditional format rule against a cell value.
@@ -6,7 +6,7 @@ import type { CellStyle, ConditionalFormatRule, TrackerColumn } from '@/types';
 export function evaluateCondition(
   rule: ConditionalFormatRule,
   cellValue: unknown,
-  columnType: TrackerColumn['type'],
+  columnType: SheetColumn['type'],
 ): boolean {
   const { operator, value, value2 } = rule;
   const isMultiselect = columnType === 'multiselect';
@@ -71,7 +71,7 @@ export function evaluateCondition(
  * 4. Per-cell override (highest priority)
  */
 export function resolveEffectiveStyle(
-  column: TrackerColumn,
+  column: SheetColumn,
   cellValue: unknown,
   cellFormat?: CellStyle | null,
 ): CellStyle {

@@ -1,10 +1,12 @@
 import * as activitiesApi from '@/lib/api/activities';
 import * as tasksApi from '@/lib/api/tasks';
 import * as activityGroupsApi from '@/lib/api/activityGroups';
-import * as trackerRowsApi from '@/lib/api/trackerRows';
-import * as trackersApi from '@/lib/api/trackers';
-import * as trackerGroupsApi from '@/lib/api/trackerGroups';
-import type { UpdateActivity, UpdateTask, UpdateActivityGroup, UpdateTrackerRow, UpdateTracker, UpdateTrackerGroup } from '@/types';
+import * as sheetRowsApi from '@/lib/api/sheetRows';
+import * as sheetsApi from '@/lib/api/sheets';
+import * as sheetGroupsApi from '@/lib/api/sheetGroups';
+import * as diagramsApi from '@/lib/api/diagrams';
+import * as diagramGroupsApi from '@/lib/api/diagramGroups';
+import type { UpdateActivity, UpdateTask, UpdateActivityGroup, UpdateSheetRow, UpdateSheet, UpdateSheetGroup, UpdateDiagram, UpdateDiagramGroup } from '@/types';
 
 interface SortableItem {
   id: string;
@@ -77,45 +79,72 @@ export async function batchUpdateActivityGroupSortOrder(
   );
 }
 
-interface TrackerRowSortUpdate extends SortUpdate {
+interface SheetRowSortUpdate extends SortUpdate {
   group_id?: string | null;
 }
 
-export async function batchUpdateTrackerRowSortOrder(
-  updates: TrackerRowSortUpdate[],
+export async function batchUpdateSheetRowSortOrder(
+  updates: SheetRowSortUpdate[],
 ): Promise<void> {
   await Promise.all(
     updates.map(({ id, sort_order, group_id }) => {
-      const data: UpdateTrackerRow = { sort_order };
+      const data: UpdateSheetRow = { sort_order };
       if (group_id !== undefined) data.group_id = group_id;
-      return trackerRowsApi.update(id, data);
+      return sheetRowsApi.update(id, data);
     }),
   );
 }
 
-interface TrackerSortUpdate extends SortUpdate {
+interface SheetSortUpdate extends SortUpdate {
   group_id?: string | null;
 }
 
-export async function batchUpdateTrackerSortOrder(
-  updates: TrackerSortUpdate[],
+export async function batchUpdateSheetSortOrder(
+  updates: SheetSortUpdate[],
 ): Promise<void> {
   await Promise.all(
     updates.map(({ id, sort_order, group_id }) => {
-      const data: UpdateTracker = { sort_order };
+      const data: UpdateSheet = { sort_order };
       if (group_id !== undefined) data.group_id = group_id;
-      return trackersApi.update(id, data);
+      return sheetsApi.update(id, data);
     }),
   );
 }
 
-export async function batchUpdateTrackerGroupSortOrder(
+export async function batchUpdateSheetGroupSortOrder(
   updates: SortUpdate[],
 ): Promise<void> {
   await Promise.all(
     updates.map(({ id, sort_order }) => {
-      const data: UpdateTrackerGroup = { sort_order };
-      return trackerGroupsApi.update(id, data);
+      const data: UpdateSheetGroup = { sort_order };
+      return sheetGroupsApi.update(id, data);
+    }),
+  );
+}
+
+interface DiagramSortUpdate extends SortUpdate {
+  group_id?: string | null;
+}
+
+export async function batchUpdateDiagramSortOrder(
+  updates: DiagramSortUpdate[],
+): Promise<void> {
+  await Promise.all(
+    updates.map(({ id, sort_order, group_id }) => {
+      const data: UpdateDiagram = { sort_order };
+      if (group_id !== undefined) data.group_id = group_id;
+      return diagramsApi.update(id, data);
+    }),
+  );
+}
+
+export async function batchUpdateDiagramGroupSortOrder(
+  updates: SortUpdate[],
+): Promise<void> {
+  await Promise.all(
+    updates.map(({ id, sort_order }) => {
+      const data: UpdateDiagramGroup = { sort_order };
+      return diagramGroupsApi.update(id, data);
     }),
   );
 }

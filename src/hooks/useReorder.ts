@@ -4,11 +4,13 @@ import {
   batchUpdateActivitySortOrder,
   batchUpdateTaskSortOrder,
   batchUpdateActivityGroupSortOrder,
-  batchUpdateTrackerSortOrder,
-  batchUpdateTrackerGroupSortOrder,
+  batchUpdateSheetSortOrder,
+  batchUpdateSheetGroupSortOrder,
+  batchUpdateDiagramSortOrder,
+  batchUpdateDiagramGroupSortOrder,
 } from '@/lib/utils/reorder';
 import { toast } from 'sonner';
-import type { Activity, Task, ActivityGroup, Tracker, TrackerGroup } from '@/types';
+import type { Activity, Task, ActivityGroup, Sheet, SheetGroup, Diagram, DiagramGroup } from '@/types';
 
 interface ActivitySortUpdate {
   id: string;
@@ -127,19 +129,19 @@ export function useReorderActivityGroups(workstreamId: string) {
   });
 }
 
-interface TrackerSortUpdate extends SortUpdate {
+interface SheetSortUpdate extends SortUpdate {
   group_id?: string | null;
 }
 
-export function useReorderTrackers() {
+export function useReorderSheets() {
   const qc = useQueryClient();
-  const qk = queryKeys.trackers.all();
+  const qk = queryKeys.sheets.all();
 
   return useMutation({
-    mutationFn: (updates: TrackerSortUpdate[]) => batchUpdateTrackerSortOrder(updates),
+    mutationFn: (updates: SheetSortUpdate[]) => batchUpdateSheetSortOrder(updates),
     onMutate: async (updates) => {
       await qc.cancelQueries({ queryKey: qk });
-      const prev = qc.getQueryData<Tracker[]>(qk);
+      const prev = qc.getQueryData<Sheet[]>(qk);
       if (prev) {
         const updateMap = new Map(updates.map(u => [u.id, u]));
         qc.setQueryData(
@@ -169,15 +171,90 @@ export function useReorderTrackers() {
   });
 }
 
-export function useReorderTrackerGroups() {
+export function useReorderSheetGroups() {
   const qc = useQueryClient();
-  const qk = queryKeys.trackerGroups.all();
+  const qk = queryKeys.sheetGroups.all();
 
   return useMutation({
-    mutationFn: (updates: SortUpdate[]) => batchUpdateTrackerGroupSortOrder(updates),
+    mutationFn: (updates: SortUpdate[]) => batchUpdateSheetGroupSortOrder(updates),
     onMutate: async (updates) => {
       await qc.cancelQueries({ queryKey: qk });
-      const prev = qc.getQueryData<TrackerGroup[]>(qk);
+      const prev = qc.getQueryData<SheetGroup[]>(qk);
+      if (prev) {
+        const updateMap = new Map(updates.map(u => [u.id, u.sort_order]));
+        qc.setQueryData(
+          qk,
+          prev.map(g => {
+            const newOrder = updateMap.get(g.id);
+            return newOrder !== undefined ? { ...g, sort_order: newOrder } : g;
+          }),
+        );
+      }
+      return { prev };
+    },
+    onError: (e: Error, _vars, context) => {
+      if (context?.prev) {
+        qc.setQueryData(qk, context.prev);
+      }
+      toast.error(`Reorder failed: ${e.message}`);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: qk });
+    },
+  });
+}
+
+interface DiagramSortUpdate extends SortUpdate {
+  group_id?: string | null;
+}
+
+export function useReorderDiagrams() {
+  const qc = useQueryClient();
+  const qk = queryKeys.diagrams.all();
+
+  return useMutation({
+    mutationFn: (updates: DiagramSortUpdate[]) => batchUpdateDiagramSortOrder(updates),
+    onMutate: async (updates) => {
+      await qc.cancelQueries({ queryKey: qk });
+      const prev = qc.getQueryData<Diagram[]>(qk);
+      if (prev) {
+        const updateMap = new Map(updates.map(u => [u.id, u]));
+        qc.setQueryData(
+          qk,
+          prev.map(d => {
+            const upd = updateMap.get(d.id);
+            if (!upd) return d;
+            return {
+              ...d,
+              sort_order: upd.sort_order,
+              ...(upd.group_id !== undefined ? { group_id: upd.group_id } : {}),
+            };
+          }),
+        );
+      }
+      return { prev };
+    },
+    onError: (e: Error, _vars, context) => {
+      if (context?.prev) {
+        qc.setQueryData(qk, context.prev);
+      }
+      toast.error(`Reorder failed: ${e.message}`);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: qk });
+    },
+  });
+}
+
+export function useReorderDiagramGroups() {
+  const qc = useQueryClient();
+  const qk = queryKeys.diagramGroups.all();
+
+  return useMutation({
+    mutationFn: (updates: SortUpdate[]) => batchUpdateDiagramGroupSortOrder(updates),
+    onMutate: async (updates) => {
+      await qc.cancelQueries({ queryKey: qk });
+      const prev = qc.getQueryData<DiagramGroup[]>(qk);
       if (prev) {
         const updateMap = new Map(updates.map(u => [u.id, u.sort_order]));
         qc.setQueryData(

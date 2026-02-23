@@ -45,20 +45,21 @@ export function useTeamMembers() {
   });
 
   const inviteMutation = useMutation({
-    mutationFn: (data: { email: string; full_name: string; title: string | null; permission_level: PermissionLevel }) =>
-      teamMembersApi.invite(data.email, data.full_name, data.title, data.permission_level),
+    mutationFn: (data: { email: string; full_name: string; title: string | null; permission_level: PermissionLevel; password: string }) =>
+      teamMembersApi.invite(data.email, data.full_name, data.title, data.permission_level, data.password),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.teamMembers.all() });
       logEvent({ event_type: 'create', entity_type: 'team_member' });
-      toast.success('Invitation sent');
+      toast.success('Member created');
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const resendInviteMutation = useMutation({
-    mutationFn: (email: string) => teamMembersApi.resendInvite(email),
+  const resetPasswordMutation = useMutation({
+    mutationFn: (data: { userId: string; password: string }) =>
+      teamMembersApi.resetPassword(data.userId, data.password),
     onSuccess: () => {
-      toast.success('Invitation resent');
+      toast.success('Password reset');
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -70,6 +71,6 @@ export function useTeamMembers() {
     deactivateMember: deactivateMutation.mutateAsync,
     reactivateMember: reactivateMutation.mutateAsync,
     inviteMember: inviteMutation.mutateAsync,
-    resendInvite: resendInviteMutation.mutateAsync,
+    resetPassword: resetPasswordMutation.mutateAsync,
   };
 }

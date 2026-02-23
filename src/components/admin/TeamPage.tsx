@@ -11,7 +11,7 @@ import type { TeamMember } from '@/types';
 
 export default function TeamPage() {
   const { isAdmin, isLoading: authLoading } = useAuth();
-  const { members, isLoading, deactivateMember, reactivateMember, resendInvite } = useTeamMembers();
+  const { members, isLoading, deactivateMember, reactivateMember } = useTeamMembers();
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -34,10 +34,6 @@ export default function TeamPage() {
     await reactivateMember(member.id);
   };
 
-  const handleResendInvite = async (member: TeamMember) => {
-    await resendInvite(member.email);
-  };
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -50,7 +46,7 @@ export default function TeamPage() {
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-xl hover:bg-primary-700"
         >
           <Plus className="w-4 h-4" />
-          Invite Member
+          Add Member
         </button>
       </div>
 
@@ -62,7 +58,6 @@ export default function TeamPage() {
           onEdit={setEditingMember}
           onDeactivate={setDeactivatingMember}
           onReactivate={handleReactivate}
-          onResendInvite={handleResendInvite}
         />
       )}
 

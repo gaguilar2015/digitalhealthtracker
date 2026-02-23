@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
+// Reset password for an existing user (admin only)
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -43,17 +44,24 @@ Deno.serve(async (req) => {
 
     if (memberError || !callerMember || callerMember.permission_level !== "admin") {
       return new Response(
-        JSON.stringify({ error: "Only admins can resend invites" }),
+        JSON.stringify({ error: "Only admins can reset passwords" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     // 2. Parse request body
-    const { email } = await req.json();
+    const { user_id, password } = await req.json();
 
-    if (!email) {
+    if (!user_id || !password) {
       return new Response(
-        JSON.stringify({ error: "Missing required field: email" }),
+        JSON.stringify({ error: "Missing required fields: user_id, password" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (typeof password !== "string" || password.length < 8) {
+      return new Response(
+        JSON.stringify({ error: "Password must be at least 8 characters" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -61,33 +69,15 @@ Deno.serve(async (req) => {
     // 3. Admin client with service role key
     const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    // Look up user ID from team_members
-    const { data: teamMember } = await adminClient
-      .from("team_members")
-      .select("id")
-      .eq("email", email)
-      .single();
-
-    if (teamMember) {
-      // Always reset email_confirmed_at first (harmless if already null).
-      // This ensures inviteUserByEmail won't fail with "already registered".
-      const { error: rpcError } = await adminClient.rpc('reset_email_confirmation', {
-        target_user_id: teamMember.id,
-      });
-      if (rpcError) {
-        console.error("reset_email_confirmation RPC failed:", rpcError.message);
-      }
-    }
-
-    // Single invite call — only one rate-limit slot consumed
-    const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo: 'https://bz-health-tracker.netlify.app',
+    // Update the user's password
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(user_id, {
+      password,
     });
 
-    if (inviteError) {
-      console.error("inviteUserByEmail failed:", inviteError.message);
+    if (updateError) {
+      console.error("updateUserById failed:", updateError.message);
       return new Response(
-        JSON.stringify({ error: inviteError.message }),
+        JSON.stringify({ error: updateError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }

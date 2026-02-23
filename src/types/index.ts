@@ -5,14 +5,26 @@ export type {
   DependencyItemType,
   AttachmentParentType,
   ResourceType,
-  TrackerColumnType,
+  SheetColumnType,
+  ChartType,
+  AggFunction,
+  DateBucket,
+  SourceType,
+  SortBy,
+  DiagramNodeType,
 } from './enums';
 
 export {
   ITEM_STATUSES,
   PERMISSION_LEVELS,
   WORKSTREAM_COLORS,
-  TRACKER_COLUMN_TYPES,
+  SHEET_COLUMN_TYPES,
+  CHART_TYPES,
+  AGG_FUNCTIONS,
+  DATE_BUCKETS,
+  SOURCE_TYPES,
+  SORT_BY_OPTIONS,
+  DIAGRAM_NODE_TYPES,
 } from './enums';
 
 export type {
@@ -25,14 +37,21 @@ export type {
   Dependency, CreateDependency,
   Attachment, CreateAttachment,
   Resource, CreateResource, UpdateResource,
-  TrackerColumn,
-  TrackerGroup, CreateTrackerGroup, UpdateTrackerGroup,
-  Tracker, CreateTracker, UpdateTracker,
-  TrackerMember, CreateTrackerMember,
-  TrackerGroupMember, CreateTrackerGroupMember,
-  TrackerRow, CreateTrackerRow, UpdateTrackerRow,
+  SheetColumn,
+  SheetGroup, CreateSheetGroup, UpdateSheetGroup,
+  Sheet, CreateSheet, UpdateSheet,
+  SheetMember, CreateSheetMember,
+  SheetGroupMember, CreateSheetGroupMember,
+  SheetRow, CreateSheetRow, UpdateSheetRow,
   WorkstreamMember, CreateWorkstreamMember,
-  TrackerRowComment, CreateTrackerRowComment,
+  SheetRowComment, CreateSheetRowComment,
+  WidgetConfig, ChartDataPoint,
+  DashboardWidget, CreateDashboardWidget, UpdateDashboardWidget,
+  DiagramNodeData, DiagramEdgeData, DiagramLegendItem, DiagramFlowData,
+  DiagramGroup, CreateDiagramGroup, UpdateDiagramGroup,
+  DiagramGroupMember, CreateDiagramGroupMember,
+  Diagram, CreateDiagram, UpdateDiagram,
+  DiagramMember, CreateDiagramMember,
 } from './database';
 
 export type {
@@ -40,7 +59,7 @@ export type {
   SelectOptionStyle,
   ConditionalOperator,
   ConditionalFormatRule,
-  TrackerRowGroup,
+  SheetRowGroup,
 } from './formatting';
 
 export {
