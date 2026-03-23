@@ -40,3 +40,5 @@ export const SORT_BY_OPTIONS: SortBy[] = ['category_asc', 'value_desc', 'value_a
 
 export type DiagramNodeType = 'system' | 'database' | 'form' | 'group' | 'process' | 'decision' | 'document' | 'cloud' | 'person' | 'queue' | 'note' | 'terminal';
 export const DIAGRAM_NODE_TYPES: DiagramNodeType[] = ['system', 'database', 'form', 'group', 'process', 'decision', 'document', 'cloud', 'person', 'queue', 'note', 'terminal'];
+
+export type VisibilityMode = 'all' | 'my-team' | 'my-work';

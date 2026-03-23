@@ -5,18 +5,21 @@ import { X, Eye, EyeOff, RefreshCw, Copy, Check, KeyRound } from 'lucide-react';
 import { z } from 'zod';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { FormField } from '@/components/shared';
+import { getAllSubordinateIds } from '@/lib/utils/hierarchy';
 import type { TeamMember, PermissionLevel } from '@/types';
 
 const editMemberSchema = z.object({
   full_name: z.string().min(1, 'Name is required').max(100),
   title: z.string().max(100).nullable().optional(),
   permission_level: z.enum(['admin', 'member', 'viewer']),
+  supervisor_id: z.string().nullable().optional(),
 });
 
 interface EditMemberValues {
   full_name: string;
   title?: string | null;
   permission_level: PermissionLevel;
+  supervisor_id?: string | null;
 }
 
 interface EditMemberDialogProps {
@@ -34,7 +37,7 @@ function generatePassword(): string {
 }
 
 export function EditMemberDialog({ open, onClose, member }: EditMemberDialogProps) {
-  const { updateMember, resetPassword } = useTeamMembers();
+  const { updateMember, resetPassword, members } = useTeamMembers();
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -54,6 +57,7 @@ export function EditMemberDialog({ open, onClose, member }: EditMemberDialogProp
       full_name: '',
       title: null,
       permission_level: 'member',
+      supervisor_id: null,
     },
   });
 
@@ -63,6 +67,7 @@ export function EditMemberDialog({ open, onClose, member }: EditMemberDialogProp
         full_name: member.full_name,
         title: member.title,
         permission_level: member.permission_level,
+        supervisor_id: member.supervisor_id,
       });
       setShowResetPassword(false);
       setNewPassword('');
@@ -105,7 +110,7 @@ export function EditMemberDialog({ open, onClose, member }: EditMemberDialogProp
 
   const onSubmit = async (data: EditMemberValues) => {
     if (!member) return;
-    await updateMember({ id: member.id, data });
+    await updateMember({ id: member.id, data: { ...data, supervisor_id: data.supervisor_id || null } });
     onClose();
   };
 
@@ -144,6 +149,30 @@ export function EditMemberDialog({ open, onClose, member }: EditMemberDialogProp
               <option value="member">Member</option>
               <option value="admin">Admin</option>
               <option value="viewer">Viewer</option>
+            </select>
+          </FormField>
+
+          <FormField label="Reports To">
+            <select
+              {...register('supervisor_id')}
+              className="w-full px-3 py-2 text-sm border border-surface-200 rounded-xl focus:border-primary-500 focus:ring-primary-500"
+            >
+              <option value="">None (top level)</option>
+              {members
+                .filter(m => {
+                  if (!member) return false;
+                  if (m.id === member.id) return false;
+                  // Prevent cycles: exclude anyone in this member's subordinate chain
+                  const subordinates = getAllSubordinateIds(member.id, members);
+                  return !subordinates.has(m.id);
+                })
+                .filter(m => m.is_active)
+                .sort((a, b) => a.full_name.localeCompare(b.full_name))
+                .map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.full_name}{m.title ? ` (${m.title})` : ''}
+                  </option>
+                ))}
             </select>
           </FormField>
 

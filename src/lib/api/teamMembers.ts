@@ -58,6 +58,7 @@ export async function invite(
   title: string | null,
   permissionLevel: PermissionLevel,
   password: string,
+  supervisorId?: string | null,
 ): Promise<void> {
   const { data, error } = await supabase.functions.invoke('invite-user', {
     body: {
@@ -66,6 +67,7 @@ export async function invite(
       title,
       permission_level: permissionLevel,
       password,
+      supervisor_id: supervisorId ?? null,
     },
   });
 

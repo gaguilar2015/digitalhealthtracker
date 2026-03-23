@@ -5,6 +5,7 @@ import { useWorkstreams } from '@/hooks/useWorkstreams';
 import { useActivities } from '@/hooks/useActivities';
 import { useDeliverables } from '@/hooks/useDeliverables';
 import { useIsMobile } from '@/hooks/useMediaQuery';
+import { useTeamVisibility } from '@/hooks/useTeamVisibility';
 import { SkeletonLoader } from '@/components/shared';
 import { WorkplanSidebar } from './WorkplanSidebar';
 import { WorkplanAllWorkstreams } from './WorkplanAllWorkstreams';
@@ -22,8 +23,10 @@ export default function WorkplanPage() {
   const { workstreams, isLoading } = useWorkstreams();
   const [activeTab, setActiveTab] = useState<WorkplanTab>('activities');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { setMode: setVisibilityMode } = useTeamVisibility();
 
-  const selectedWorkstream = code
+  const isSentinel = code === '__my-work__' || code === '__my-team__';
+  const selectedWorkstream = (code && !isSentinel)
     ? workstreams.find(ws => ws.code === code) ?? null
     : null;
 
@@ -31,20 +34,35 @@ export default function WorkplanPage() {
   const { activities } = useActivities(selectedWorkstream?.id);
   const { deliverables } = useDeliverables(selectedWorkstream?.id);
 
-  // Reset to activities tab when workstream changes
+  // Sync visibility mode with URL sentinel codes
   useEffect(() => {
-    setActiveTab('activities');
-  }, [code]);
+    if (code === '__my-work__') {
+      setVisibilityMode('my-work');
+    } else if (code === '__my-team__') {
+      setVisibilityMode('my-team');
+    } else {
+      setActiveTab('activities');
+      setVisibilityMode('all');
+    }
+  }, [code, setVisibilityMode]);
 
   const handleSelectWorkstream = useCallback(
     (wsCode: string | null) => {
-      if (wsCode) {
+      if (wsCode === '__my-work__') {
+        setVisibilityMode('my-work');
+        navigate('/workplan/__my-work__');
+      } else if (wsCode === '__my-team__') {
+        setVisibilityMode('my-team');
+        navigate('/workplan/__my-team__');
+      } else if (wsCode) {
+        setVisibilityMode('all');
         navigate(`/workplan/${wsCode}`);
       } else {
+        setVisibilityMode('all');
         navigate('/workplan');
       }
     },
-    [navigate],
+    [navigate, setVisibilityMode],
   );
 
   if (isLoading) {
@@ -122,6 +140,8 @@ export default function WorkplanPage() {
               onChange={e => handleSelectWorkstream(e.target.value || null)}
               className="w-full rounded-xl border-surface-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
             >
+              <option value="__my-work__">My Work</option>
+              <option value="__my-team__">My Team</option>
               <option value="">All Workstreams</option>
               {workstreams
                 .sort((a, b) => a.sort_order - b.sort_order)

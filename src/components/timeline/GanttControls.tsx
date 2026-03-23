@@ -1,26 +1,29 @@
 import { ChevronDown, Download } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { clsx } from 'clsx';
-import type { Workstream } from '@/types';
+import type { Workstream, TeamMember } from '@/types';
 
-export type ZoomLevel = 'quarter' | 'year' | 'full';
 export type DetailLevel = 'workstream' | 'activity_group' | 'activity' | 'task';
 
 interface GanttControlsProps {
-  zoom: ZoomLevel;
-  onZoomChange: (z: ZoomLevel) => void;
+  zoom: number;
+  onZoomChange: (z: number) => void;
   detailLevel: DetailLevel;
   onDetailChange: (d: DetailLevel) => void;
   selectedWorkstreams: string[];
   onFilterChange: (ids: string[]) => void;
   onExport: (format: 'png' | 'pdf') => void;
   workstreams: Workstream[];
+  members: TeamMember[];
+  selectedOwners: string[];
+  onOwnerFilterChange: (ids: string[]) => void;
 }
 
-const zoomOptions: { value: ZoomLevel; label: string }[] = [
-  { value: 'quarter', label: 'Quarter' },
-  { value: 'year', label: 'Year' },
-  { value: 'full', label: 'Full' },
+const zoomOptions: { value: number; label: string }[] = [
+  { value: 1, label: '1x' },
+  { value: 2, label: '2x' },
+  { value: 3, label: '3x' },
+  { value: 4, label: '4x' },
 ];
 
 const detailOptions: { value: DetailLevel; label: string }[] = [
@@ -39,16 +42,22 @@ export function GanttControls({
   onFilterChange,
   onExport,
   workstreams,
+  members,
+  selectedOwners,
+  onOwnerFilterChange,
 }: GanttControlsProps) {
   const [showExport, setShowExport] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const [showOwnerFilter, setShowOwnerFilter] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
+  const ownerFilterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (exportRef.current && !exportRef.current.contains(e.target as Node)) setShowExport(false);
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) setShowFilter(false);
+      if (ownerFilterRef.current && !ownerFilterRef.current.contains(e.target as Node)) setShowOwnerFilter(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -59,6 +68,31 @@ export function GanttControls({
       onFilterChange(selectedWorkstreams.filter(w => w !== id));
     } else {
       onFilterChange([...selectedWorkstreams, id]);
+    }
+  };
+
+  // Build unique owner list from workstreams
+  const ownerOptions = (() => {
+    const seen = new Set<string>();
+    const result: { id: string; label: string }[] = [];
+    for (const ws of workstreams) {
+      const key = ws.owner_id ?? '__unassigned__';
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const owner = ws.owner_id ? members.find(m => m.id === ws.owner_id) : null;
+      result.push({
+        id: key,
+        label: owner ? (owner.title || owner.full_name) : 'Unassigned',
+      });
+    }
+    return result;
+  })();
+
+  const toggleOwner = (id: string) => {
+    if (selectedOwners.includes(id)) {
+      onOwnerFilterChange(selectedOwners.filter(o => o !== id));
+    } else {
+      onOwnerFilterChange([...selectedOwners, id]);
     }
   };
 
@@ -136,6 +170,50 @@ export function GanttControls({
                   className="rounded border-surface-200 text-primary-600"
                 />
                 <span className="text-xs text-gray-700">{ws.code} - {ws.short_name}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Filter by Owner/Role */}
+      <div className="relative" ref={ownerFilterRef}>
+        <button
+          onClick={() => setShowOwnerFilter(prev => !prev)}
+          className="flex items-center gap-1 px-2.5 py-1 text-xs rounded font-medium bg-surface-50 text-gray-600 hover:bg-surface-200"
+        >
+          Role
+          {selectedOwners.length > 0 && selectedOwners.length < ownerOptions.length && (
+            <span className="bg-primary-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
+              {selectedOwners.length}
+            </span>
+          )}
+          <ChevronDown className="w-3 h-3" />
+        </button>
+        {showOwnerFilter && (
+          <div className="absolute top-full mt-1 left-0 bg-white border border-surface-200 rounded-lg shadow-lg py-1 z-20 min-w-[200px]">
+            <button
+              onClick={() => onOwnerFilterChange(ownerOptions.map(o => o.id))}
+              className="w-full text-left px-3 py-1.5 text-xs text-primary-600 hover:bg-surface-100"
+            >
+              Select all
+            </button>
+            <button
+              onClick={() => onOwnerFilterChange([])}
+              className="w-full text-left px-3 py-1.5 text-xs text-primary-600 hover:bg-surface-100"
+            >
+              Clear all
+            </button>
+            <div className="border-t my-1" />
+            {ownerOptions.map(o => (
+              <label key={o.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-surface-100 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedOwners.includes(o.id)}
+                  onChange={() => toggleOwner(o.id)}
+                  className="rounded border-surface-200 text-primary-600"
+                />
+                <span className="text-xs text-gray-700">{o.label}</span>
               </label>
             ))}
           </div>

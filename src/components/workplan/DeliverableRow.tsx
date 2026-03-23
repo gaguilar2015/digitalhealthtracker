@@ -7,14 +7,15 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { getStatusColor } from '@/lib/utils';
 import { clsx } from 'clsx';
 import { DeliverableDialog } from './DeliverableDialog';
-import type { Deliverable, ItemStatus } from '@/types';
+import type { Deliverable, Activity, ItemStatus } from '@/types';
 
 interface DeliverableRowProps {
   deliverable: Deliverable;
   workstreamId: string;
+  activities?: Activity[];
 }
 
-export function DeliverableRow({ deliverable, workstreamId }: DeliverableRowProps) {
+export function DeliverableRow({ deliverable, workstreamId, activities }: DeliverableRowProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const { members } = useTeamMembers();
@@ -50,7 +51,15 @@ export function DeliverableRow({ deliverable, workstreamId }: DeliverableRowProp
         )}
         style={{ borderLeftWidth: 3, borderLeftColor: getStatusColor(deliverable.status) }}
       >
-        <span className="flex-1 text-sm text-gray-900 font-medium truncate">{deliverable.name}</span>
+        <span className="flex-1 text-sm text-gray-900 font-medium truncate">
+          {deliverable.name}
+          {deliverable.activity_id && activities && (() => {
+            const act = activities.find(a => a.id === deliverable.activity_id);
+            return act ? (
+              <span className="ml-1.5 text-[10px] font-medium text-gray-400 bg-surface-100 px-1.5 py-0.5 rounded">{act.code}</span>
+            ) : null;
+          })()}
+        </span>
 
         <StatusDropdown
           status={deliverable.status}

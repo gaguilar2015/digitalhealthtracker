@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Package } from 'lucide-react';
 import { useDeliverables } from '@/hooks/useDeliverables';
+import { useActivities } from '@/hooks/useActivities';
 import { usePermissions } from '@/hooks/usePermissions';
 import { SkeletonLoader, EmptyState } from '@/components/shared';
 import { DeliverableRow } from './DeliverableRow';
@@ -14,6 +15,7 @@ interface DeliverablesSectionProps {
 export function DeliverablesSection({ workstream }: DeliverablesSectionProps) {
   const [addOpen, setAddOpen] = useState(false);
   const { deliverables, isLoading } = useDeliverables(workstream.id);
+  const { activities } = useActivities(workstream.id);
   const { canEditItem } = usePermissions();
 
   if (isLoading) {
@@ -44,6 +46,7 @@ export function DeliverablesSection({ workstream }: DeliverablesSectionProps) {
                 key={deliverable.id}
                 deliverable={deliverable}
                 workstreamId={workstream.id}
+                activities={activities}
               />
             ))}
         </div>

@@ -5,11 +5,12 @@ import { useAllDeliverables } from '@/hooks/useDeliverables';
 import { useAllDependencies } from '@/hooks/useDependencies';
 import { useAllTasks } from '@/hooks/useTasks';
 import { useAllActivityGroups } from '@/hooks/useActivityGroups';
+import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { SkeletonLoader, EmptyState } from '@/components/shared';
 import { GanttChart as GanttIcon } from 'lucide-react';
 import { GanttControls } from './GanttControls';
 import { GanttChart } from './GanttChart';
-import type { ZoomLevel, DetailLevel } from './GanttControls';
+import type { DetailLevel } from './GanttControls';
 
 export default function TimelinePage() {
   const { workstreams, isLoading: wsLoading } = useWorkstreams();
@@ -18,16 +19,20 @@ export default function TimelinePage() {
   const { dependencies, isLoading: depLoading } = useAllDependencies();
   const { tasks, isLoading: taskLoading } = useAllTasks();
   const { activityGroups, isLoading: agLoading } = useAllActivityGroups();
+  const { members } = useTeamMembers();
 
-  const [zoom, setZoom] = useState<ZoomLevel>('full');
+  const [zoom, setZoom] = useState(1);
   const [detailLevel, setDetailLevel] = useState<DetailLevel>('activity');
   const [selectedWorkstreams, setSelectedWorkstreams] = useState<string[]>([]);
+  const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // Initialize selected workstreams when loaded
+  // Initialize selected workstreams and owners when loaded
   const wsInitialized = useRef(false);
   if (!wsInitialized.current && workstreams.length > 0) {
     setSelectedWorkstreams(workstreams.map(ws => ws.id));
+    const ownerIds = [...new Set(workstreams.map(ws => ws.owner_id ?? '__unassigned__'))];
+    setSelectedOwners(ownerIds);
     wsInitialized.current = true;
   }
 
@@ -61,9 +66,13 @@ export default function TimelinePage() {
     );
   }
 
-  const filteredWorkstreams = workstreams.filter(ws => selectedWorkstreams.includes(ws.id));
-  const filteredActivities = activities.filter(a => selectedWorkstreams.includes(a.workstream_id));
-  const filteredDeliverables = deliverables.filter(d => selectedWorkstreams.includes(d.workstream_id));
+  const filteredWorkstreams = workstreams.filter(ws =>
+    selectedWorkstreams.includes(ws.id) &&
+    selectedOwners.includes(ws.owner_id ?? '__unassigned__'),
+  );
+  const filteredWsIds = new Set(filteredWorkstreams.map(ws => ws.id));
+  const filteredActivities = activities.filter(a => filteredWsIds.has(a.workstream_id));
+  const filteredDeliverables = deliverables.filter(d => filteredWsIds.has(d.workstream_id));
 
   return (
     <div className="p-6 space-y-4">
@@ -78,6 +87,9 @@ export default function TimelinePage() {
         onFilterChange={setSelectedWorkstreams}
         onExport={handleExport}
         workstreams={workstreams}
+        members={members}
+        selectedOwners={selectedOwners}
+        onOwnerFilterChange={setSelectedOwners}
       />
 
       <div ref={chartRef}>
@@ -88,6 +100,7 @@ export default function TimelinePage() {
           tasks={tasks}
           deliverables={filteredDeliverables}
           dependencies={dependencies}
+          members={members}
           zoom={zoom}
           detailLevel={detailLevel}
         />

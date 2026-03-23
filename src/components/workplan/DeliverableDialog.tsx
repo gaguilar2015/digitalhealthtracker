@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { deliverableSchema } from '@/lib/utils/validation';
 import { useDeliverables } from '@/hooks/useDeliverables';
+import { useActivities } from '@/hooks/useActivities';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { useWorkstreamMembers } from '@/hooks/useWorkstreamMembers';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,6 +24,7 @@ interface DeliverableDialogProps {
 
 export function DeliverableDialog({ open, onClose, workstreamId, deliverable }: DeliverableDialogProps) {
   const { createDeliverable, updateDeliverable } = useDeliverables(workstreamId);
+  const { activities } = useActivities(workstreamId);
   const { members } = useTeamMembers();
   const { members: wsMemberRecords } = useWorkstreamMembers(workstreamId);
   const { teamMember } = useAuth();
@@ -44,6 +46,7 @@ export function DeliverableDialog({ open, onClose, workstreamId, deliverable }: 
       name: '',
       description: '',
       workstream_id: workstreamId,
+      activity_id: null,
       due_date: '',
       status: 'not_started',
       assigned_to: null,
@@ -59,6 +62,7 @@ export function DeliverableDialog({ open, onClose, workstreamId, deliverable }: 
           name: deliverable.name,
           description: deliverable.description ?? '',
           workstream_id: workstreamId,
+          activity_id: deliverable.activity_id,
           due_date: deliverable.due_date,
           status: deliverable.status,
           assigned_to: deliverable.assigned_to,
@@ -70,6 +74,7 @@ export function DeliverableDialog({ open, onClose, workstreamId, deliverable }: 
           name: '',
           description: '',
           workstream_id: workstreamId,
+          activity_id: null,
           due_date: '',
           status: 'not_started',
           assigned_to: teamMember?.id ?? null,
@@ -84,6 +89,7 @@ export function DeliverableDialog({ open, onClose, workstreamId, deliverable }: 
     const payload = {
       ...data,
       description: data.description || null,
+      activity_id: data.activity_id || null,
       assigned_to: data.assigned_to || null,
       notes: data.notes || null,
     };
@@ -124,6 +130,20 @@ export function DeliverableDialog({ open, onClose, workstreamId, deliverable }: 
               className="w-full rounded-xl border-surface-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
               placeholder="Optional description"
             />
+          </FormField>
+
+          <FormField label="Linked Activity">
+            <select
+              {...register('activity_id')}
+              className="w-full rounded-xl border-surface-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+            >
+              <option value="">None (workstream-level)</option>
+              {[...activities]
+                .sort((a, b) => a.code.localeCompare(b.code))
+                .map(a => (
+                  <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
+                ))}
+            </select>
           </FormField>
 
           <div className="grid grid-cols-2 gap-4">

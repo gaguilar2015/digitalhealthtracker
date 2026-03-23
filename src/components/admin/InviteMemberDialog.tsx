@@ -12,6 +12,7 @@ interface InviteFormValues {
   title: string | null;
   permission_level: 'admin' | 'member' | 'viewer';
   password: string;
+  supervisor_id: string | null;
 }
 
 interface InviteMemberDialogProps {
@@ -28,7 +29,7 @@ function generatePassword(): string {
 }
 
 export function InviteMemberDialog({ open, onClose }: InviteMemberDialogProps) {
-  const { inviteMember } = useTeamMembers();
+  const { inviteMember, members } = useTeamMembers();
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -48,6 +49,7 @@ export function InviteMemberDialog({ open, onClose }: InviteMemberDialogProps) {
       title: null,
       permission_level: 'member',
       password: '',
+      supervisor_id: null,
     },
   });
 
@@ -59,6 +61,7 @@ export function InviteMemberDialog({ open, onClose }: InviteMemberDialogProps) {
         title: null,
         permission_level: 'member',
         password: '',
+        supervisor_id: null,
       });
       setShowPassword(false);
       setCopied(false);
@@ -83,6 +86,7 @@ export function InviteMemberDialog({ open, onClose }: InviteMemberDialogProps) {
     await inviteMember({
       ...data,
       title: data.title ?? null,
+      supervisor_id: data.supervisor_id || null,
     });
     onClose();
   };
@@ -132,6 +136,23 @@ export function InviteMemberDialog({ open, onClose }: InviteMemberDialogProps) {
               <option value="member">Member</option>
               <option value="admin">Admin</option>
               <option value="viewer">Viewer</option>
+            </select>
+          </FormField>
+
+          <FormField label="Reports To">
+            <select
+              {...register('supervisor_id')}
+              className="w-full px-3 py-2 text-sm border border-surface-200 rounded-xl focus:border-primary-500 focus:ring-primary-500"
+            >
+              <option value="">None (top level)</option>
+              {members
+                .filter(m => m.is_active)
+                .sort((a, b) => a.full_name.localeCompare(b.full_name))
+                .map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.full_name}{m.title ? ` (${m.title})` : ''}
+                  </option>
+                ))}
             </select>
           </FormField>
 

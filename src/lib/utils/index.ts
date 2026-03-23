@@ -9,3 +9,4 @@ export {
 } from './validation';
 export { computeSortUpdates } from './reorder';
 export { groupAndSortActivities, CATEGORY_CONFIGS } from './activityCategories';
+export { getDirectReportIds, getAllSubordinateIds, hasSubordinates, getSupervisorChain, getVisibleUserIds } from './hierarchy';

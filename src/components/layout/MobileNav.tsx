@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, GanttChart, FolderOpen, Table2, Workflow, Users, X, Activity, Settings, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, GanttChart, FolderOpen, Table2, Workflow, BookOpen, Users, X, Activity, Settings, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { clsx } from 'clsx';
 
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/resources', label: 'Resources', icon: FolderOpen },
   { to: '/sheets', label: 'Sheets', icon: Table2 },
   { to: '/diagrams', label: 'Diagrams', icon: Workflow },
+  { to: '/guide', label: 'Guide', icon: BookOpen },
 ];
 
 interface MobileNavProps {

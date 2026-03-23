@@ -12,6 +12,7 @@ export type {
   SourceType,
   SortBy,
   DiagramNodeType,
+  VisibilityMode,
 } from './enums';
 
 export {

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { TeamVisibilityProvider } from '@/contexts/TeamVisibilityContext';
 import { ToastProvider } from '@/components/shared';
 import AuthGuard from '@/components/auth/AuthGuard';
 import LoginPage from '@/components/auth/LoginPage';
@@ -18,6 +19,7 @@ const DiagramsPage = lazy(() => import('@/components/diagrams/DiagramsPage'));
 const ProfilePage = lazy(() => import('@/components/profile/ProfilePage'));
 const TeamPage = lazy(() => import('@/components/admin/TeamPage'));
 const AuditLogsPage = lazy(() => import('@/components/admin/AuditLogsPage'));
+const GuidePage = lazy(() => import('@/components/guide/GuidePage'));
 
 function PageLoader() {
   return (
@@ -48,7 +50,9 @@ export default function App() {
             <Route
               element={
                 <AuthGuard>
-                  <AppLayout />
+                  <TeamVisibilityProvider>
+                    <AppLayout />
+                  </TeamVisibilityProvider>
                 </AuthGuard>
               }
             >
@@ -64,6 +68,7 @@ export default function App() {
               <Route path="profile" element={<Suspense fallback={<PageLoader />}><ProfilePage /></Suspense>} />
               <Route path="admin/team" element={<Suspense fallback={<PageLoader />}><TeamPage /></Suspense>} />
               <Route path="admin/audit-logs" element={<Suspense fallback={<PageLoader />}><AuditLogsPage /></Suspense>} />
+              <Route path="guide" element={<Suspense fallback={<PageLoader />}><GuidePage /></Suspense>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

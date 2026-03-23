@@ -54,6 +54,7 @@ export const deliverableSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().nullable().optional(),
   workstream_id: z.string().min(1),
+  activity_id: z.string().nullable().optional(),
   due_date: z.string().min(1, 'Due date is required'),
   status: z.enum(['not_started', 'in_progress', 'complete', 'delayed']),
   assigned_to: z.string().nullable().optional(),

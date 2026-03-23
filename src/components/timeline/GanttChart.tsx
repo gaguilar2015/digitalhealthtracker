@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { parseISO, differenceInDays, format, eachMonthOfInterval, startOfMonth } from 'date-fns';
+import { parseISO, differenceInDays, format, eachMonthOfInterval, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
 import { GanttRow, GanttRowLabel } from './GanttRow';
 import { GanttBar } from './GanttBar';
 import { GanttDiamond } from './GanttDiamond';
 import { GanttDependencyArrow } from './GanttDependencyArrow';
 import { getWorkstreamColorHex } from '@/lib/utils/colors';
 import { isOverdue } from '@/lib/utils/dates';
-import type { Workstream, Activity, ActivityGroup, Task, Deliverable, Dependency } from '@/types';
-import type { ZoomLevel, DetailLevel } from './GanttControls';
+import type { Workstream, Activity, ActivityGroup, Task, Deliverable, Dependency, TeamMember } from '@/types';
+import type { DetailLevel } from './GanttControls';
 import type { GanttItemData } from './GanttTooltip';
 
 interface GanttChartProps {
@@ -17,31 +17,16 @@ interface GanttChartProps {
   tasks: Task[];
   deliverables: Deliverable[];
   dependencies: Dependency[];
-  zoom: ZoomLevel;
+  members: TeamMember[];
+  zoom: number;
   detailLevel: DetailLevel;
-}
-
-// Project timeline: Jan 2026 - Dec 2027
-const PROJECT_START = new Date(2026, 0, 1);
-const PROJECT_END = new Date(2027, 11, 31);
-const TOTAL_DAYS = differenceInDays(PROJECT_END, PROJECT_START);
-
-function dateToPercent(dateStr: string): number {
-  const d = parseISO(dateStr);
-  const days = differenceInDays(d, PROJECT_START);
-  return (days / TOTAL_DAYS) * 100;
-}
-
-function barPosition(startStr: string, endStr: string) {
-  const left = dateToPercent(startStr);
-  const right = dateToPercent(endStr);
-  return { leftPercent: Math.max(0, left), widthPercent: Math.max(0.3, right - left) };
 }
 
 interface RowData {
   key: string;
   label: string;
   isGroupHeader: boolean;
+  isOwnerHeader?: boolean;
   indent: number;
   color?: string;
   bars: BarData[];
@@ -63,27 +48,101 @@ export function GanttChart({
   tasks,
   deliverables,
   dependencies,
+  members,
   zoom,
   detailLevel,
 }: GanttChartProps) {
-  const months = useMemo(() => {
-    return eachMonthOfInterval({ start: PROJECT_START, end: PROJECT_END });
-  }, []);
+  // Compute dynamic timeline range from all data
+  const { rangeStart, rangeEnd, totalDays } = useMemo(() => {
+    const allDates: Date[] = [];
+    for (const ws of workstreams) {
+      if (ws.start_date) allDates.push(parseISO(ws.start_date));
+      if (ws.end_date) allDates.push(parseISO(ws.end_date));
+    }
+    for (const a of activities) {
+      if (a.start_date) allDates.push(parseISO(a.start_date));
+      if (a.end_date) allDates.push(parseISO(a.end_date));
+    }
+    for (const t of tasks) {
+      if (t.start_date) allDates.push(parseISO(t.start_date));
+      if (t.end_date) allDates.push(parseISO(t.end_date));
+    }
+    for (const d of deliverables) {
+      if (d.due_date) allDates.push(parseISO(d.due_date));
+    }
 
-  const widthMultiplier = zoom === 'quarter' ? 4 : zoom === 'year' ? 2 : 1;
+    if (allDates.length === 0) {
+      const now = new Date();
+      return {
+        rangeStart: new Date(now.getFullYear(), 0, 1),
+        rangeEnd: new Date(now.getFullYear(), 11, 31),
+        totalDays: 365,
+      };
+    }
+
+    const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
+    const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
+    const start = subMonths(startOfMonth(minDate), 1);
+    const end = addMonths(endOfMonth(maxDate), 1);
+    return { rangeStart: start, rangeEnd: end, totalDays: differenceInDays(end, start) };
+  }, [workstreams, activities, tasks, deliverables]);
+
+  // Date positioning helpers using dynamic range
+  const dateToPercent = (dateStr: string): number => {
+    const d = parseISO(dateStr);
+    return (differenceInDays(d, rangeStart) / totalDays) * 100;
+  };
+
+  const barPosition = (startStr: string, endStr: string) => {
+    const left = dateToPercent(startStr);
+    const right = dateToPercent(endStr);
+    return { leftPercent: Math.max(0, left), widthPercent: Math.max(0.3, right - left) };
+  };
+
+  const months = useMemo(() => {
+    return eachMonthOfInterval({ start: rangeStart, end: rangeEnd });
+  }, [rangeStart, rangeEnd]);
+
+  const widthMultiplier = zoom;
 
   const todayPercent = useMemo(() => {
     const now = new Date();
-    if (now < PROJECT_START || now > PROJECT_END) return null;
-    return (differenceInDays(now, PROJECT_START) / TOTAL_DAYS) * 100;
-  }, []);
+    if (now < rangeStart || now > rangeEnd) return null;
+    return (differenceInDays(now, rangeStart) / totalDays) * 100;
+  }, [rangeStart, rangeEnd, totalDays]);
 
-  // Build rows based on detail level
+  // Build rows based on detail level, grouped by owner
   const rows = useMemo<RowData[]>(() => {
     const result: RowData[] = [];
     const sortedWs = [...workstreams].sort((a, b) => a.sort_order - b.sort_order);
 
+    // Group workstreams by owner
+    const ownerGroupsMap = new Map<string | null, Workstream[]>();
     for (const ws of sortedWs) {
+      const key = ws.owner_id;
+      if (!ownerGroupsMap.has(key)) ownerGroupsMap.set(key, []);
+      ownerGroupsMap.get(key)!.push(ws);
+    }
+    const ownerGroups = Array.from(ownerGroupsMap.entries()).sort(
+      (a, b) => a[1][0].sort_order - b[1][0].sort_order,
+    );
+
+    for (const [ownerId, ownerWorkstreams] of ownerGroups) {
+      // Owner header row
+      const owner = ownerId ? members.find(m => m.id === ownerId) : null;
+      const ownerLabel = owner
+        ? (owner.title ? `${owner.title} — ${owner.full_name}` : owner.full_name)
+        : 'Unassigned';
+      result.push({
+        key: `owner-${ownerId ?? 'unassigned'}`,
+        label: ownerLabel,
+        isGroupHeader: true,
+        isOwnerHeader: true,
+        indent: 0,
+        bars: [],
+      });
+
+    for (const ws of ownerWorkstreams) {
       const wsColor = getWorkstreamColorHex(ws.color);
       const wsActivities = activities.filter(a => a.workstream_id === ws.id);
       const wsDeliverables = deliverables.filter(d => d.workstream_id === ws.id);
@@ -114,10 +173,22 @@ export function GanttChart({
             isOverdue: isOverdue(del.due_date, del.status),
           });
         }
-        result.push({ key: ws.id, label: `${ws.code} - ${ws.short_name}`, isGroupHeader: true, indent: 0, color: wsColor, bars });
+        result.push({ key: ws.id, label: `${ws.code} - ${ws.short_name}`, isGroupHeader: true, indent: 1, color: wsColor, bars });
       } else if (detailLevel === 'activity_group') {
-        // Workstream header row
-        result.push({ key: `ws-${ws.id}`, label: `${ws.code} - ${ws.short_name}`, isGroupHeader: true, indent: 0, color: wsColor, bars: [] });
+        // Split deliverables: unlinked go on workstream header, linked handled later
+        const unlinkedDels = wsDeliverables.filter(d => !d.activity_id);
+        const wsHeaderBars: BarData[] = unlinkedDels.map(del => ({
+          type: 'diamond' as const,
+          data: {
+            id: del.id, name: del.name, type: 'deliverable' as const,
+            dueDate: del.due_date, status: del.status,
+            workstreamCode: ws.code, workstreamId: ws.id,
+          },
+          leftPercent: dateToPercent(del.due_date),
+          color: wsColor,
+          isOverdue: isOverdue(del.due_date, del.status),
+        }));
+        result.push({ key: `ws-${ws.id}`, label: `${ws.code} - ${ws.short_name}`, isGroupHeader: true, indent: 1, color: wsColor, bars: wsHeaderBars });
 
         const wsGroups = activityGroups
           .filter(g => g.workstream_id === ws.id)
@@ -145,7 +216,7 @@ export function GanttChart({
             color: wsColor,
             isOverdue: false,
           }] : [];
-          result.push({ key: group.id, label: group.name, isGroupHeader: false, indent: 1, color: wsColor, bars: groupBars });
+          result.push({ key: group.id, label: group.name, isGroupHeader: false, indent: 2, color: wsColor, bars: groupBars });
         }
 
         // Ungrouped activities (no activity_group_id)
@@ -168,34 +239,31 @@ export function GanttChart({
             color: wsColor,
             isOverdue: isOverdue(act.end_date, act.status),
           }];
-          result.push({ key: act.id, label: act.name, isGroupHeader: false, indent: 1, color: wsColor, bars: actBars });
-        }
-
-        // Deliverables
-        const sortedDeliverables = [...wsDeliverables].sort((a, b) => {
-          if (!a.due_date && !b.due_date) return 0;
-          if (!a.due_date) return 1;
-          if (!b.due_date) return -1;
-          return a.due_date.localeCompare(b.due_date);
-        });
-        for (const del of sortedDeliverables) {
-          const delBars: BarData[] = [{
-            type: 'diamond',
-            data: {
-              id: del.id, name: del.name, type: 'deliverable',
-              dueDate: del.due_date, status: del.status,
-              workstreamCode: ws.code, workstreamId: ws.id,
-            },
-            leftPercent: dateToPercent(del.due_date),
-            color: wsColor,
-            isOverdue: isOverdue(del.due_date, del.status),
-          }];
-          result.push({ key: `del-${del.id}`, label: del.name, isGroupHeader: false, indent: 1, bars: delBars });
+          result.push({ key: act.id, label: act.name, isGroupHeader: false, indent: 2, color: wsColor, bars: actBars });
         }
       } else {
         // activity or task detail level
-        // Workstream header row
-        result.push({ key: `ws-${ws.id}`, label: `${ws.code} - ${ws.short_name}`, isGroupHeader: true, indent: 0, color: wsColor, bars: [] });
+        // Split deliverables: unlinked go on workstream header, linked go on activity rows
+        const unlinkedDels = wsDeliverables.filter(d => !d.activity_id);
+        const linkedDelsByActivity = new Map<string, typeof wsDeliverables>();
+        for (const del of wsDeliverables.filter(d => d.activity_id)) {
+          const key = del.activity_id!;
+          if (!linkedDelsByActivity.has(key)) linkedDelsByActivity.set(key, []);
+          linkedDelsByActivity.get(key)!.push(del);
+        }
+
+        const wsHeaderBars: BarData[] = unlinkedDels.map(del => ({
+          type: 'diamond' as const,
+          data: {
+            id: del.id, name: del.name, type: 'deliverable' as const,
+            dueDate: del.due_date, status: del.status,
+            workstreamCode: ws.code, workstreamId: ws.id,
+          },
+          leftPercent: dateToPercent(del.due_date),
+          color: wsColor,
+          isOverdue: isOverdue(del.due_date, del.status),
+        }));
+        result.push({ key: `ws-${ws.id}`, label: `${ws.code} - ${ws.short_name}`, isGroupHeader: true, indent: 1, color: wsColor, bars: wsHeaderBars });
 
         const sortedActivities = [...wsActivities].sort((a, b) => {
           if (!a.start_date && !b.start_date) return 0;
@@ -204,6 +272,8 @@ export function GanttChart({
           return a.start_date.localeCompare(b.start_date);
         });
         for (const act of sortedActivities) {
+          // Activity bar + any linked deliverable diamonds
+          const actLinkedDels = linkedDelsByActivity.get(act.id) ?? [];
           const actBars: BarData[] = [{
             type: 'bar',
             data: {
@@ -215,7 +285,20 @@ export function GanttChart({
             color: wsColor,
             isOverdue: isOverdue(act.end_date, act.status),
           }];
-          result.push({ key: act.id, label: act.name, isGroupHeader: false, indent: 1, color: wsColor, bars: actBars });
+          for (const del of actLinkedDels) {
+            actBars.push({
+              type: 'diamond',
+              data: {
+                id: del.id, name: del.name, type: 'deliverable',
+                dueDate: del.due_date, status: del.status,
+                workstreamCode: ws.code, workstreamId: ws.id,
+              },
+              leftPercent: dateToPercent(del.due_date),
+              color: wsColor,
+              isOverdue: isOverdue(del.due_date, del.status),
+            });
+          }
+          result.push({ key: act.id, label: act.name, isGroupHeader: false, indent: 2, color: wsColor, bars: actBars });
 
           if (detailLevel === 'task') {
             const actTasks = tasks
@@ -239,36 +322,17 @@ export function GanttChart({
                 color: wsColor,
                 isOverdue: isOverdue(task.end_date, task.status),
               }];
-              result.push({ key: task.id, label: task.name, isGroupHeader: false, indent: 2, bars: taskBars });
+              result.push({ key: task.id, label: task.name, isGroupHeader: false, indent: 3, bars: taskBars });
             }
           }
         }
 
-        const sortedDeliverables = [...wsDeliverables].sort((a, b) => {
-          if (!a.due_date && !b.due_date) return 0;
-          if (!a.due_date) return 1;
-          if (!b.due_date) return -1;
-          return a.due_date.localeCompare(b.due_date);
-        });
-        for (const del of sortedDeliverables) {
-          const delBars: BarData[] = [{
-            type: 'diamond',
-            data: {
-              id: del.id, name: del.name, type: 'deliverable',
-              dueDate: del.due_date, status: del.status,
-              workstreamCode: ws.code, workstreamId: ws.id,
-            },
-            leftPercent: dateToPercent(del.due_date),
-            color: wsColor,
-            isOverdue: isOverdue(del.due_date, del.status),
-          }];
-          result.push({ key: `del-${del.id}`, label: del.name, isGroupHeader: false, indent: 1, bars: delBars });
-        }
       }
+    }
     }
 
     return result;
-  }, [workstreams, activities, activityGroups, tasks, deliverables, detailLevel]);
+  }, [workstreams, activities, activityGroups, tasks, deliverables, members, detailLevel]);
 
   // Dependency arrows
   const depArrows = useMemo(() => {
@@ -318,6 +382,7 @@ export function GanttChart({
               key={row.key}
               label={row.label}
               isGroupHeader={row.isGroupHeader}
+              isOwnerHeader={row.isOwnerHeader}
               indent={row.indent}
               color={row.color}
             />
@@ -332,8 +397,8 @@ export function GanttChart({
               {months.map(month => {
                 const monthStart = startOfMonth(month);
                 const nextMonth = new Date(month.getFullYear(), month.getMonth() + 1, 1);
-                const effectiveEnd = nextMonth > PROJECT_END ? PROJECT_END : nextMonth;
-                const width = (differenceInDays(effectiveEnd, monthStart) / TOTAL_DAYS) * 100;
+                const effectiveEnd = nextMonth > rangeEnd ? rangeEnd : nextMonth;
+                const width = (differenceInDays(effectiveEnd, monthStart) / totalDays) * 100;
 
                 return (
                   <div
@@ -351,7 +416,7 @@ export function GanttChart({
             <div className="relative">
               {/* Vertical month gridlines */}
               {months.map(month => {
-                const left = (differenceInDays(startOfMonth(month), PROJECT_START) / TOTAL_DAYS) * 100;
+                const left = (differenceInDays(startOfMonth(month), rangeStart) / totalDays) * 100;
                 return (
                   <div
                     key={`grid-${month.toISOString()}`}
@@ -399,6 +464,7 @@ export function GanttChart({
                   key={row.key}
                   label={row.label}
                   isGroupHeader={row.isGroupHeader}
+                  isOwnerHeader={row.isOwnerHeader}
                   indent={row.indent}
                   color={row.color}
                 >
@@ -422,6 +488,7 @@ export function GanttChart({
                         color={bar.color}
                         status={bar.data.status}
                         leftPercent={bar.leftPercent}
+                        item={bar.data}
                       />
                     ),
                   )}

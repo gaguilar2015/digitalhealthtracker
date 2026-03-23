@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     }
 
     // 2. Parse request body
-    const { email, full_name, title, permission_level, password } = await req.json();
+    const { email, full_name, title, permission_level, password, supervisor_id } = await req.json();
 
     if (!email || !full_name || !permission_level || !password) {
       return new Response(
@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
         title: title ?? null,
         permission_level,
         invited_by: caller.id,
+        supervisor_id: supervisor_id ?? null,
       });
 
     if (insertError) {

@@ -52,7 +52,7 @@ export default function DiagramsPage() {
           </div>
           <div className="p-4">
             {id ? (
-              <DiagramDetailContent diagramId={id} />
+              <DiagramDetailContent key={id} diagramId={id} />
             ) : (
               <DiagramsOverview onSelectDiagram={handleSelectDiagram} />
             )}
@@ -75,7 +75,7 @@ export default function DiagramsPage() {
           </aside>
           <main className="flex-1 overflow-y-auto p-6 page-enter">
             {id ? (
-              <DiagramDetailContent diagramId={id} />
+              <DiagramDetailContent key={id} diagramId={id} />
             ) : (
               <DiagramsOverview onSelectDiagram={handleSelectDiagram} />
             )}

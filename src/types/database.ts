@@ -28,6 +28,7 @@ export interface TeamMember {
   avatar_url: string | null;
   last_login_at: string | null;
   invited_by: string | null;
+  supervisor_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -108,6 +109,7 @@ export interface Deliverable {
   name: string;
   description: string | null;
   workstream_id: string;
+  activity_id: string | null;
   due_date: string;
   status: ItemStatus;
   completion_date: string | null;

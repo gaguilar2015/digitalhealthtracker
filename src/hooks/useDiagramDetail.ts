@@ -5,12 +5,19 @@ import { useRealtimeSubscription } from './useRealtimeSubscription';
 import { useAuditLog } from './useAuditLog';
 import { toast } from 'sonner';
 import type { UpdateDiagram, CreateDiagramMember, DiagramFlowData } from '@/types';
-import { useMemo, useCallback, useRef } from 'react';
+import { useMemo, useCallback, useRef, useEffect } from 'react';
 
 export function useDiagramDetail(diagramId: string | undefined) {
   const qc = useQueryClient();
   const { logEvent } = useAuditLog();
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear pending debounced save on unmount to prevent stale writes
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   const realtimeKeys = useMemo(
     () => [

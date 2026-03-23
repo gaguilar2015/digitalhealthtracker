@@ -153,6 +153,7 @@ export function TeamTable({ members, onEdit, onDeactivate, onReactivate }: TeamT
                 <SortHeader field="email">Email</SortHeader>
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reports To</th>
               <th className="px-4 py-3 text-left">
                 <SortHeader field="permission_level">Permission</SortHeader>
               </th>
@@ -176,6 +177,11 @@ export function TeamTable({ members, onEdit, onDeactivate, onReactivate }: TeamT
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500">{member.email}</td>
                 <td className="px-4 py-3 text-sm text-gray-500">{member.title ?? '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-500">
+                  {member.supervisor_id
+                    ? members.find(m => m.id === member.supervisor_id)?.full_name ?? '-'
+                    : '-'}
+                </td>
                 <td className="px-4 py-3">
                   <span
                     className={clsx(

@@ -45,8 +45,8 @@ export function useTeamMembers() {
   });
 
   const inviteMutation = useMutation({
-    mutationFn: (data: { email: string; full_name: string; title: string | null; permission_level: PermissionLevel; password: string }) =>
-      teamMembersApi.invite(data.email, data.full_name, data.title, data.permission_level, data.password),
+    mutationFn: (data: { email: string; full_name: string; title: string | null; permission_level: PermissionLevel; password: string; supervisor_id?: string | null }) =>
+      teamMembersApi.invite(data.email, data.full_name, data.title, data.permission_level, data.password, data.supervisor_id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.teamMembers.all() });
       logEvent({ event_type: 'create', entity_type: 'team_member' });
