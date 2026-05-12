@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useWorkstreams } from '@/hooks/useWorkstreams';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +19,7 @@ import type { AttentionItem } from '@/hooks/useDashboardData';
 import type { Activity, Deliverable } from '@/types';
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const { data, isLoading } = useDashboardData();
   const { workstreams, isLoading: wsLoading } = useWorkstreams();
   const { teamMember, isAdmin } = useAuth();
@@ -139,7 +141,7 @@ export default function DashboardPage() {
           icon={<LayoutDashboard className="w-12 h-12" />}
           message="Welcome! Create a workstream in the Workplan to get started."
           actionLabel="Go to Workplan"
-          onAction={() => window.location.assign('/workplan')}
+          onAction={() => navigate('/workplan')}
         />
       </div>
     );

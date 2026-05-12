@@ -264,9 +264,9 @@ Team Member ──→ owner of Workstreams
 
 | Level | Description |
 |-------|-------------|
-| **Admin** | Full CRUD on all workstreams, activities, tasks, deliverables, resources, and attachments. Can manage team members (invite, edit permissions, deactivate). Can delete any item. |
-| **Member** | Can view all items. Can create activities, tasks, and resources. Can edit and delete items assigned to them (`assigned_to = self`) or items they created (`created_by = self`). Can update the status of their assigned items. Can upload and manage their own attachments. |
-| **Viewer** | Read-only access to all pages. Cannot create, edit, or delete anything. Cannot upload attachments. Useful for stakeholders who need visibility without editing. |
+| **Admin** | Full CRUD on all workstreams, activities, tasks, deliverables, resources, and attachments. Can manage team members (invite, edit permissions, deactivate, reset passwords). Can delete any item. Can view audit logs. |
+| **Member** | Can view all items. Can create and update workstreams; can delete workstreams they own. Full CRUD on activity groups, activities, tasks, deliverables, and resources (edit/delete restricted to own or assigned items). Can update the status of their assigned items. Can upload and manage their own attachments. Can create sheets and diagrams; manage sheet groups; CRUD rows on sheets they have access to; edit diagrams they have access to. |
+| **Viewer** | Read-only access to all pages. Cannot create, edit, or delete anything. Cannot upload attachments. May post (and delete their own) row-comments on sheets they have access to. Useful for stakeholders who need visibility plus a comment-only channel. |
 
 ### What's Not Here
 
@@ -288,8 +288,10 @@ Team Member ──→ owner of Workstreams
 | Action | Admin | Member | Viewer |
 |--------|-------|--------|--------|
 | View all workstreams, activities, tasks, deliverables | Yes | Yes | Yes |
-| Create workstream | Yes | No | No |
-| Edit/delete workstream | Yes | No (owner can edit) | No |
+| Create workstream | Yes | Yes | No |
+| Edit workstream | Yes | Yes (owner) | No |
+| Delete workstream | Yes | Yes (owner only) | No |
+| Create / edit / delete activity group | Yes | Yes | No |
 | Create activity / task | Yes | Yes | No |
 | Edit activity / task (own) | Yes | Yes | No |
 | Edit activity / task (others') | Yes | No | No |
@@ -303,7 +305,11 @@ Team Member ──→ owner of Workstreams
 | Upload/delete attachments (own) | Yes | Yes | No |
 | Delete attachments (others') | Yes | No | No |
 | Create/edit/delete resources | Yes | Yes | No |
-| Manage team members | Yes | No | No |
+| Create sheet / diagram | Yes | Yes | No |
+| Create / edit / delete sheet group | Yes | Yes | No |
+| Comment on sheet rows (sheets they belong to) | Yes | Yes | Yes |
+| Manage team members (invite, edit, delete, reset passwords) | Yes | No | No |
+| View audit logs | Yes | No | No |
 | Export (Excel, PDF) | Yes | Yes | Yes |
 
 **Ownership note:** "Own" means items where `assigned_to = current_user` OR `created_by = current_user`. Workstream ownership is determined by `owner_id`.

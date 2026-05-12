@@ -85,7 +85,7 @@ export function WorkplanAllWorkstreams({ onSelectWorkstream }: WorkplanAllWorkst
         <h2 className="text-lg font-bold text-gray-900">
           {visibilityMode === 'my-work' ? 'My Work' : visibilityMode === 'my-team' ? "My Team's Work" : 'All Workstreams'}
         </h2>
-        <PermissionGate required="admin">
+        <PermissionGate required="member">
           <button
             onClick={() => setCreateOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary-600 rounded-xl hover:bg-primary-700"

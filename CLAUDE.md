@@ -198,9 +198,9 @@ The Diagrams page uses a **sidebar layout** (like Sheets): collapsible sidebar l
 
 ### Permissions (3 levels)
 
-- **Admin:** Full CRUD everywhere, manage team members, create workstreams, sees all sheets and diagrams
-- **Member:** View all, create activities/tasks/deliverables, edit/delete own or assigned items, create sheets and diagrams, CRUD rows on sheets they have access to, edit diagrams they have access to
-- **Viewer:** Read-only everywhere (including sheets and diagrams they have access to)
+- **Admin:** Full CRUD everywhere; manages team members (invite, edit, delete, reset passwords); audit logs; sees all sheets and diagrams.
+- **Member:** Creates and updates workstreams; deletes workstreams they own. Full CRUD on activity groups, activities, tasks, deliverables (edit/delete restricted to own or assigned items). Creates sheets and diagrams; manages sheet groups; CRUDs rows on sheets they have access to; edits diagrams they have access to.
+- **Viewer:** Read-only across the app. May post (and delete their own) row-comments on sheets they have access to.
 
 ### Key Patterns
 

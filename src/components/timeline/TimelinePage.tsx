@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWorkstreams } from '@/hooks/useWorkstreams';
 import { useAllActivities } from '@/hooks/useActivities';
 import { useAllDeliverables } from '@/hooks/useDeliverables';
@@ -13,6 +14,7 @@ import { GanttChart } from './GanttChart';
 import type { DetailLevel } from './GanttControls';
 
 export default function TimelinePage() {
+  const navigate = useNavigate();
   const { workstreams, isLoading: wsLoading } = useWorkstreams();
   const { activities, isLoading: actLoading } = useAllActivities();
   const { deliverables, isLoading: delLoading } = useAllDeliverables();
@@ -60,7 +62,7 @@ export default function TimelinePage() {
           icon={<GanttIcon className="w-12 h-12" />}
           message="No workstreams yet. Create a workstream in the Workplan to see the timeline."
           actionLabel="Go to Workplan"
-          onAction={() => window.location.assign('/workplan')}
+          onAction={() => navigate('/workplan')}
         />
       </div>
     );

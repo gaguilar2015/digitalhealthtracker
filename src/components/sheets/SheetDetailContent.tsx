@@ -241,7 +241,7 @@ export function SheetDetailContent({ sheetId }: SheetDetailContentProps) {
             rowIndex={commentRowIndex}
             comments={rowComments}
             teamMembers={teamMembers}
-            readOnly={readOnly}
+            readOnly={false}
             currentUserId={user!.id}
             isAdmin={isAdmin}
             onAddComment={(content) => {
