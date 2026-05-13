@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useSheets } from '@/hooks/useSheets';
 import { useSheetGroups } from '@/hooks/useSheetGroups';
+import { useMySheetGroupIds } from '@/hooks/useMySheetGroupIds';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -41,9 +42,10 @@ export function SheetSidebar({ selectedId, onSelect, collapsed, onToggleCollapse
   const [manageGroupsOpen, setManageGroupsOpen] = useState(false);
   const [createGroupId, setCreateGroupId] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { sheets, isLoading, createSheet } = useSheets();
   const { groups, isLoading: groupsLoading } = useSheetGroups();
+  const myGroupIds = useMySheetGroupIds();
   const { members } = useTeamMembers();
   const { canEditItem } = usePermissions();
   const { mutate: reorderSheets } = useReorderSheets();
@@ -62,8 +64,6 @@ export function SheetSidebar({ selectedId, onSelect, collapsed, onToggleCollapse
     () => [...sheets].sort((a, b) => a.sort_order - b.sort_order),
     [sheets],
   );
-
-  const hasGroups = sortedGroups.length > 0;
 
   // Build a map of groupId -> sheets
   const sheetsByGroup = useMemo(() => {
@@ -86,6 +86,20 @@ export function SheetSidebar({ selectedId, onSelect, collapsed, onToggleCollapse
   }, [sortedSheets]);
 
   const ungroupedSheets = sheetsByGroup.get(null) ?? [];
+
+  // A category is visible if (a) it has at least one accessible sheet, or
+  // (b) the current user can act on it (admin, or member of the sheet_group).
+  // This keeps the "you can add a sheet here" affordance while suppressing
+  // empty categories for users with no business seeing them.
+  const visibleGroups = useMemo(
+    () => sortedGroups.filter(group => {
+      const groupSheets = sheetsByGroup.get(group.id) ?? [];
+      return groupSheets.length > 0 || isAdmin || myGroupIds.has(group.id);
+    }),
+    [sortedGroups, sheetsByGroup, isAdmin, myGroupIds],
+  );
+
+  const hasGroups = visibleGroups.length > 0;
 
   const toggleGroup = (groupId: string) => {
     setCollapsedGroups(prev => {
@@ -332,7 +346,7 @@ export function SheetSidebar({ selectedId, onSelect, collapsed, onToggleCollapse
 
         {hasGroups ? (
           <>
-            {sortedGroups.map((group, gi) => {
+            {visibleGroups.map((group, gi) => {
               const groupSheets = sheetsByGroup.get(group.id) ?? [];
               if (groupSheets.length === 0) return null;
               return (
@@ -527,7 +541,7 @@ export function SheetSidebar({ selectedId, onSelect, collapsed, onToggleCollapse
               onDragEnd={handleSheetDragEnd}
             >
               {/* Groups (group headers are not draggable in this context — use Manage Groups to reorder) */}
-              {sortedGroups.map(group => renderGroupSection(group))}
+              {visibleGroups.map(group => renderGroupSection(group))}
 
               {/* Ungrouped section */}
               {ungroupedSheets.length > 0 && (
@@ -549,7 +563,7 @@ export function SheetSidebar({ selectedId, onSelect, collapsed, onToggleCollapse
             </DndContext>
           ) : (
             <>
-              {sortedGroups.map(group => {
+              {visibleGroups.map(group => {
                 const groupSheets = sheetsByGroup.get(group.id) ?? [];
                 const isCollapsed = collapsedGroups.has(group.id);
                 return (

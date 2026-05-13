@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useDiagrams } from '@/hooks/useDiagrams';
 import { useDiagramGroups } from '@/hooks/useDiagramGroups';
+import { useMyDiagramGroupIds } from '@/hooks/useMyDiagramGroupIds';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -37,9 +38,10 @@ export function DiagramSidebar({ selectedId, onSelect, collapsed, onToggleCollap
   const [manageGroupsOpen, setManageGroupsOpen] = useState(false);
   const [createGroupId, setCreateGroupId] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { diagrams, isLoading, createDiagram } = useDiagrams();
   const { groups, isLoading: groupsLoading } = useDiagramGroups();
+  const myGroupIds = useMyDiagramGroupIds();
   const { members } = useTeamMembers();
   const { canEditItem } = usePermissions();
   const { mutate: reorderDiagrams } = useReorderDiagrams();
@@ -58,8 +60,6 @@ export function DiagramSidebar({ selectedId, onSelect, collapsed, onToggleCollap
     () => [...diagrams].sort((a, b) => a.sort_order - b.sort_order),
     [diagrams],
   );
-
-  const hasGroups = sortedGroups.length > 0;
 
   // Build a map of groupId -> diagrams
   const diagramsByGroup = useMemo(() => {
@@ -82,6 +82,18 @@ export function DiagramSidebar({ selectedId, onSelect, collapsed, onToggleCollap
   }, [sortedDiagrams]);
 
   const ungroupedDiagrams = diagramsByGroup.get(null) ?? [];
+
+  // A category is visible if (a) it has at least one accessible diagram, or
+  // (b) the current user can act on it (admin, or member of the diagram_group).
+  const visibleGroups = useMemo(
+    () => sortedGroups.filter(group => {
+      const groupDiagrams = diagramsByGroup.get(group.id) ?? [];
+      return groupDiagrams.length > 0 || isAdmin || myGroupIds.has(group.id);
+    }),
+    [sortedGroups, diagramsByGroup, isAdmin, myGroupIds],
+  );
+
+  const hasGroups = visibleGroups.length > 0;
 
   const toggleGroup = (groupId: string) => {
     setCollapsedGroups(prev => {
@@ -285,7 +297,7 @@ export function DiagramSidebar({ selectedId, onSelect, collapsed, onToggleCollap
 
         {hasGroups ? (
           <>
-            {sortedGroups.map((group, gi) => {
+            {visibleGroups.map((group, gi) => {
               const groupDiagrams = diagramsByGroup.get(group.id) ?? [];
               if (groupDiagrams.length === 0) return null;
               return (
@@ -467,7 +479,7 @@ export function DiagramSidebar({ selectedId, onSelect, collapsed, onToggleCollap
               collisionDetection={closestCenter}
               onDragEnd={handleDiagramDragEnd}
             >
-              {sortedGroups.map(group => renderGroupSection(group))}
+              {visibleGroups.map(group => renderGroupSection(group))}
 
               {/* Ungrouped section */}
               {ungroupedDiagrams.length > 0 && (
@@ -489,7 +501,7 @@ export function DiagramSidebar({ selectedId, onSelect, collapsed, onToggleCollap
             </DndContext>
           ) : (
             <>
-              {sortedGroups.map(group => {
+              {visibleGroups.map(group => {
                 const groupDiagrams = diagramsByGroup.get(group.id) ?? [];
                 const isCollapsed = collapsedGroups.has(group.id);
                 return (

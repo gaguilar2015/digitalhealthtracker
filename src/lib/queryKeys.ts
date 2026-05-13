@@ -55,6 +55,7 @@ export const queryKeys = {
   },
   sheetGroupMembers: {
     byGroup: (groupId: string) => ['sheetGroupMembers', groupId] as const,
+    mine: (userId: string) => ['sheetGroupMembers', 'mine', userId] as const,
   },
   sheetRows: {
     bySheet: (sheetId: string) => ['sheetRows', sheetId] as const,
@@ -85,5 +86,6 @@ export const queryKeys = {
   },
   diagramGroupMembers: {
     byGroup: (groupId: string) => ['diagramGroupMembers', groupId] as const,
+    mine: (userId: string) => ['diagramGroupMembers', 'mine', userId] as const,
   },
 };

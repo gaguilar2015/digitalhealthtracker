@@ -28,3 +28,12 @@ export async function remove(id: string): Promise<void> {
     .eq('id', id);
   if (error) throw new Error(error.message);
 }
+
+export async function getMyGroupIds(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('sheet_group_members')
+    .select('sheet_group_id')
+    .eq('team_member_id', userId);
+  if (error) throw new Error(error.message);
+  return data.map(r => r.sheet_group_id);
+}
