@@ -202,6 +202,14 @@ The Diagrams page uses a **sidebar layout** (like Sheets): collapsible sidebar l
 - **Member:** Creates and updates workstreams; deletes workstreams they own. Full CRUD on activity groups, activities, tasks, deliverables (edit/delete restricted to own or assigned items). Creates sheets and diagrams; manages sheet groups; CRUDs rows on sheets they have access to; edits diagrams they have access to.
 - **Viewer:** Read-only across the app. May post (and delete their own) row-comments on sheets they have access to.
 
+### Workstream access — supervisor inheritance
+
+A user's accessible workstream set is the union of:
+1. Workstreams they're a member of via `workstream_members` (auto-added on create via the `workstream_auto_add_owner` trigger), plus
+2. The same set computed recursively for every transitive subordinate down the `supervisor_id` chain.
+
+So a supervisor automatically sees the full workplan for everyone they supervise (and their subordinates' subordinates). Sheets and diagrams do NOT follow this rule — those remain on an explicit per-share basis via `sheet_members` / `sheet_group_members` / `diagram_members`. The expansion happens client-side in [useAccessibleWorkstreamIds](src/hooks/useAccessibleWorkstreamIds.ts) and is invalidated by realtime changes to `workstream_members` or `team_members`.
+
 ### Key Patterns
 
 - **Path alias:** `@/` maps to `src/` (configured in both vite.config.ts and tsconfig.app.json)

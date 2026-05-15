@@ -66,6 +66,11 @@ export const queryKeys = {
   workstreamMembers: {
     byWorkstream: (wsId: string) => ['workstreamMembers', wsId] as const,
     mine: (userId: string) => ['workstreamMembers', 'mine', userId] as const,
+    // Supervisor-aware: includes workstreams accessible to the user OR any of
+    // their transitive subordinates. The sorted list is part of the key so
+    // changes to the hierarchy invalidate the cache automatically.
+    accessible: (userId: string, userIds: readonly string[]) =>
+      ['workstreamMembers', 'accessible', userId, userIds] as const,
   },
   auditLogs: {
     list: (filters?: Record<string, unknown>) => ['auditLogs', filters] as const,

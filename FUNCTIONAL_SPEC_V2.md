@@ -268,11 +268,19 @@ Team Member ──→ owner of Workstreams
 | **Member** | Can view all items. Can create and update workstreams; can delete workstreams they own. Full CRUD on activity groups, activities, tasks, deliverables, and resources (edit/delete restricted to own or assigned items). Can update the status of their assigned items. Can upload and manage their own attachments. Can create sheets and diagrams; manage sheet groups; CRUD rows on sheets they have access to; edit diagrams they have access to. |
 | **Viewer** | Read-only access to all pages. Cannot create, edit, or delete anything. Cannot upload attachments. May post (and delete their own) row-comments on sheets they have access to. Useful for stakeholders who need visibility plus a comment-only channel. |
 
+### Workstream access — supervisor inheritance
+
+A user's accessible workstream set is the union of:
+1. Workstreams they are a member of via `workstream_members` (workstream owners are auto-added on create).
+2. The same set computed recursively for every transitive subordinate down the `supervisor_id` chain.
+
+A supervisor therefore automatically sees the full workplan — workstreams, activities, deliverables, tasks — for everyone they supervise, including their subordinates' subordinates. No per-workstream manual grant is needed for direct reports.
+
+This rule applies **only to the workplan** (workstreams and the items inside them). Sheets and diagrams remain on an explicit per-share basis (`sheet_members`, `sheet_group_members`, `diagram_members`, `diagram_group_members`) — supervisors do NOT automatically inherit a subordinate's sheet or diagram access. Within a workstream a user can now see, the "My Team" filter on the workplan/dashboard still narrows items to those assigned to the user + subordinates by default.
+
 ### What's Not Here
 
-- **No teams.** There is no team grouping. All members see the same project.
-- **No supervisor hierarchy.** There is no `supervisor_id` or subordinate chain. Work is assigned to people, not roles.
-- **No role-based visibility.** Everyone sees everything. There is no "personal view" vs "team view" distinction. The whole team sees the whole project.
+- **No teams.** There is no team grouping construct. All authenticated users share the same project.
 - **No approval queue.** Access is invite-only (see Section 4.1). There is no registration-then-wait-for-approval flow.
 
 ### 4.1 Access Management
