@@ -27,7 +27,7 @@ export function WorkplanAllWorkstreams({ onSelectWorkstream }: WorkplanAllWorkst
   const { tasks: allTasks } = useAllTasks();
   const { members } = useTeamMembers();
   const { canEditItem } = usePermissions();
-  const { filterItems, mode: visibilityMode } = useTeamVisibility();
+  const { filterItems, mode: visibilityMode, visibleUserIds } = useTeamVisibility();
 
   const isFiltering = visibilityMode !== 'all';
 
@@ -37,12 +37,19 @@ export function WorkplanAllWorkstreams({ onSelectWorkstream }: WorkplanAllWorkst
     [activities, workstreams, filterItems],
   );
 
-  // When filtering, only show workstreams that have relevant items
+  // When filtering, show workstreams that either contain a relevant item OR
+  // are owned by someone in the current visibility scope (self + transitive
+  // subordinates in 'my-team', just self in 'my-work'). The ownership check
+  // keeps brand-new empty workstreams visible to their owner — without it,
+  // a creator would briefly see their own new workstream disappear.
   const visibleWorkstreams = useMemo(() => {
     if (!isFiltering) return workstreams;
     const wsIdsWithItems = new Set(filteredActivities.map(a => a.workstream_id));
-    return workstreams.filter(ws => wsIdsWithItems.has(ws.id));
-  }, [workstreams, filteredActivities, isFiltering]);
+    return workstreams.filter(ws =>
+      wsIdsWithItems.has(ws.id) ||
+      (ws.owner_id !== null && visibleUserIds !== null && visibleUserIds.has(ws.owner_id))
+    );
+  }, [workstreams, filteredActivities, isFiltering, visibleUserIds]);
 
   const ownerGroups = useMemo(() => {
     const groups = new Map<string | null, typeof visibleWorkstreams>();

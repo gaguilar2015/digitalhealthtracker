@@ -29,6 +29,12 @@ export function useWorkstreams() {
   const createMutation = useMutation({
     mutationFn: (data: CreateWorkstream) => workstreamsApi.create(data),
     onSuccess: (data) => {
+      // The auto-add trigger has just inserted into workstream_members. Force
+      // the accessibility cache to refresh so the new ID enters the user's
+      // accessible set before the workstreams refetch reads it back. Without
+      // this, the workstreams list refetches against a stale accessibility
+      // set and the just-created row briefly disappears until realtime fires.
+      qc.invalidateQueries({ queryKey: ['workstreamMembers'] });
       qc.invalidateQueries({ queryKey: queryKeys.workstreams.all() });
       logEvent({ event_type: 'create', entity_type: 'workstream', entity_id: data.id });
       toast.success('Workstream created');

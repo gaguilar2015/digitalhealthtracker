@@ -26,16 +26,22 @@ export function WorkplanSidebar({ selectedCode, onSelect, collapsed, onToggleCol
   const { tasks: allTasks } = useAllTasks();
   const { members } = useTeamMembers();
   const { canEditItem } = usePermissions();
-  const { hasSubordinates: hasSubs, filterItems, mode: visibilityMode } = useTeamVisibility();
+  const { hasSubordinates: hasSubs, filterItems, mode: visibilityMode, visibleUserIds } = useTeamVisibility();
   const isFiltering = visibilityMode !== 'all';
 
-  // When a visibility filter is active, only show workstreams that have relevant items
+  // When a visibility filter is active, show workstreams that either contain
+  // a relevant item OR are owned by someone in the current visibility scope.
+  // The ownership clause keeps brand-new empty workstreams visible to their
+  // owner (and to their supervisor in 'my-team').
   const visibleWorkstreams = useMemo(() => {
     if (!isFiltering) return workstreams;
     const filtered = filterItems(activities, workstreams);
     const wsIdsWithItems = new Set(filtered.map(a => a.workstream_id));
-    return workstreams.filter(ws => wsIdsWithItems.has(ws.id));
-  }, [workstreams, activities, filterItems, isFiltering]);
+    return workstreams.filter(ws =>
+      wsIdsWithItems.has(ws.id) ||
+      (ws.owner_id !== null && visibleUserIds !== null && visibleUserIds.has(ws.owner_id))
+    );
+  }, [workstreams, activities, filterItems, isFiltering, visibleUserIds]);
 
   const ownerGroups = useMemo(() => {
     const groups = new Map<string | null, typeof visibleWorkstreams>();
